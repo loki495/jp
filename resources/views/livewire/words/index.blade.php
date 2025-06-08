@@ -93,9 +93,16 @@ new class extends Component {
                             <x-table.td x-text="word.kana" />
                             <x-table.td x-text="word.meaning" />
                             <x-table.td class="text-right">
-                                <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
-                                    Edit
-                                </a>
+                                <div class="flex items-center gap-2 justify-end">
+                                    <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                        Edit
+                                    </a>
+                                    <flux:button
+                                        @click.stop="playAudio(word.kana)"
+                                        icon="play"
+                                        class="text-sm cursor-pointer"
+                                    />
+                                </div>
                             </x-table.td>
                         </x-table.tr>
                     </template>
@@ -124,9 +131,16 @@ new class extends Component {
                             <flux:checkbox.group>
                                 <flux:checkbox x-bind:checked="word.learned" @click="toggle(word)" /><span>Learned</span>
                             </flux:checkbox.group>
-                            <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
-                                Edit
-                            </a>
+                            <div class="flex items-center gap-2 justify-end">
+                                <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                    Edit
+                                </a>
+                                <flux:button
+                                    @click.stop="playAudio(word.kana)"
+                                    icon="play"
+                                    class="text-sm cursor-pointer"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -161,9 +175,16 @@ new class extends Component {
                             <x-table.td x-text="word.kana" />
                             <x-table.td x-text="word.meaning" />
                             <x-table.td class="text-right">
-                                <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
-                                    Edit
-                                </a>
+                                <div class="flex items-center gap-2 justify-end">
+                                    <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                        Edit
+                                    </a>
+                                    <flux:button
+                                        @click.stop="playAudio(word.kana)"
+                                        icon="play"
+                                        class="text-sm cursor-pointer"
+                                    />
+                                </div>
                             </x-table.td>
                         </x-table.tr>
                     </template>
@@ -190,9 +211,16 @@ new class extends Component {
                             <flux:checkbox.group>
                                 <flux:checkbox x-bind:checked="word.learned" @click="toggle(word)" /><span>Learned</span>
                             </flux:checkbox.group>
-                            <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
-                                Edit
-                            </a>
+                            <div class="flex items-center gap-2 justify-end">
+                                <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                    Edit
+                                </a>
+                                <flux:button
+                                    @click.stop="playAudio(word.kana)"
+                                    icon="play"
+                                    class="text-sm cursor-pointer"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
