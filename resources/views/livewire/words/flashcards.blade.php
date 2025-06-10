@@ -93,11 +93,23 @@ new class extends Component
     >
         <!-- Front Face -->
         <div x-ref="front"
-            class="inset-0 rounded-lg shadow-lg bg-zinc-500/30 text-zinc-200 font-bold text-6xl flex items-center justify-center text-center p-8 backface-hidden">
+            class="flex-col inset-0 rounded-lg shadow-lg bg-zinc-500/30 text-zinc-200 font-bold text-6xl flex items-center justify-center text-center p-8 backface-hidden">
             @if($mode === 'romaji')
                 {{ $currentWord['romaji'] ?? 'No word' }}
+                <flux:button
+                    @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
+                    icon="play"
+                    variant="subtle"
+                    class="mt-2 text-sm text-blue-300 underline hover:text-blue-400"
+                />
             @elseif($mode === 'kana')
                 {{ $currentWord['kana'] ?? 'No word' }}
+                <flux:button
+                    @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
+                    icon="play"
+                    variant="subtle"
+                    class="mt-2 text-sm text-blue-300 underline hover:text-blue-400"
+                />
             @else
                 <span class="text-2xl">{{ $currentWord['meaning'] ?? 'No word' }}</span>
             @endif

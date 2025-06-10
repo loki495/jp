@@ -115,7 +115,12 @@ new class extends Component {
             <template x-for="word in filtered(learnedWords)" x-bind:key="word.id">
                 <div x-data="{ open: false }" class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
                     <div class="flex justify-between items-center">
-                        <div class="font-semibold" x-text="word.romaji"></div>
+                        <div class="font-semibold w-1/3" x-text="word.romaji"></div>
+                        <flux:button
+                            @click.stop="playAudio(word.kana)"
+                            icon="play"
+                            class="text-sm cursor-pointer"
+                        />
                         <button @click="open = !open" class="text-sm text-blue-400 hover:underline">
                             <span x-show="!open">Show</span><span x-show="open">Hide</span>
                         </button>
@@ -135,11 +140,6 @@ new class extends Component {
                                 <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
                                     Edit
                                 </a>
-                                <flux:button
-                                    @click.stop="playAudio(word.kana)"
-                                    icon="play"
-                                    class="text-sm cursor-pointer"
-                                />
                             </div>
                         </div>
                     </div>
@@ -196,7 +196,12 @@ new class extends Component {
             <template x-for="word in filtered(unlearnedWords)" x-bind:key="word.id">
                 <div x-data="{ open: false }" class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
                     <div class="flex justify-between items-center">
-                        <div class="font-semibold" x-text="word.romaji"></div>
+                        <div class="font-semibold w-1/3" x-text="word.romaji"></div>
+                        <flux:button
+                            @click.stop="playAudio(word.kana)"
+                            icon="play"
+                            class="text-sm cursor-pointer"
+                        />
                         <button @click="open = !open" class="text-sm text-blue-400 hover:underline">
                             <span x-show="!open">Show</span><span x-show="open">Hide</span>
                         </button>
