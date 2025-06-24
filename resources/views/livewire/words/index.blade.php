@@ -1,75 +1,159 @@
 <?php
 
+
 namespace App\Http\Livewire;
 
+use App\Models\Hiragana;
 use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
+use App\Models\PracticeSet;
 use App\Models\Word;
 
 new class extends Component {
 
-    #[Session]
     public $search = '';
 
-    public function toggleLearned($id)
+    #[Session]
+    public $activeSetName = '';
+
+    public $sets = [];
+    public $set_words = [];
+    public $words = [];
+
+    private ?PracticeSet $practiceSet = null;
+
+    public function mount(): void {
+        if (!$this->activeSetName) {
+            $this->activeSetName = PracticeSet::LEARNED_SET;
+        }
+    }
+
+    public function toggleWordInList($id)
     {
-        $word = Word::findOrFail($id);
-        $word->learned = !$word->learned;
-        $word->save();
+        $this->practiceSet = new PracticeSet($this->activeSetName);
+        $this->practiceSet->toggleWordInList($id);
+        $this->updateSetsAndWords();
+    }
+
+    public function updateSetsAndWords()
+    {
+        $this->practiceSet = new PracticeSet($this->activeSetName);
+        $this->sets = PracticeSet::available_sets();
+        unset($this->sets[array_search(PracticeSet::HIRAGANA_SET, $this->sets)]);
+        $this->set_words = $this->practiceSet->words($this->search);
+    }
+
+    public function updatedActiveSetName()
+    {
+        $this->updateSetsAndWords();
+        $this->dispatch('set-words-updated', [
+            'words' => $this->words,
+            'set_words' => $this->set_words,
+            'sets' => $this->sets,
+        ]);
     }
 
     public function with(): array
     {
-        $words = Word::query()
-            ->where(function ($query) {
+        $this->updateSetsAndWords();
+
+        $inSet = $this->set_words;
+
+        $this->words = Word::query()
+            ->when($this->search, function ($query, $search) {
                 $query
-                    ->where('romaji', 'like', "%{$this->search}%")
-                    ->orWhere('kana', 'like', "%{$this->search}%")
-                    ->orWhere('meaning', 'like', "%{$this->search}%");
+                    ->where('romaji', 'like', "%{$search}%")
+                    ->orWhere('kana', 'like', "%{$search}%")
+                    ->orWhere('meaning', 'like', "%{$search}%");
             })
-            ->get()->toArray();
+            ->get()
+            ->filter(function ($word) use ($inSet) {
+                return !in_array($word->id, $inSet);
+            });
+
+        $hiraganas = Hiragana::all()
+            ->mapWithKeys(function ($hiragana) use ($inSet) {
+                return [
+                    $hiragana['kana'] => $hiragana['romaji'],
+                ];
+            });
 
         return [
-            'words' => $words
+            'words' => $this->words,
+            'set_words' => $this->set_words,
+            'sets' => $this->sets,
+            'all_hiraganas' => $hiraganas,
         ];
+    }
+
+    public function addList($listName) {
+        $this->practiceSet = new PracticeSet($listName);
+        $this->activeSetName = $listName;
     }
 }
 ?>
 
 <div
-    x-data="vocabState(@js($words))"
+    x-data="vocabState(@js($words), @js($set_words), @js($sets), @js($all_hiraganas))"
     x-init="init()"
     class="max-w-6xl mx-auto px-4 py-6 dark"
 >
     <h1 class="text-3xl font-bold text-center mb-8 text-white">Japanese Vocabulary Tracker</h1>
 
-    <div class="flex justify-between mb-6">
+    <div class="flex items-center gap-4 mb-4">
+    <label class="text-white font-semibold">Current List:</label>
+
+    <select wire:model.live="activeSetName" class="bg-zinc-800 text-white rounded p-2" x-cloak>
+        @foreach ($sets as $list)
+            <option value="{{ $list }}">{{ $list }}</option>
+        @endforeach
+    </select>
+
+    <button @click="if (listName = prompt('Enter list name')) $wire.addList(listName) "
+            class="rounded-xl px-4 py-2 text-sm text-white bg-green-700 hover:underline cursor-pointer">
+        Add New List
+    </button>
+    </div>
+
+    <div class="flex justify-between mb-6 gap-4">
         <div class="flex flex-col gap-4 w-full">
             <flux:input
-                x-model="search"
+                x-model.debounce="search"
                 placeholder="Search by romaji, kana, or meaning..."
                 size="md"
                 variant="filled"
                 class="max-w-lg w-full"
+                clearable
             />
-            <div x-show="loading" class="text-sm text-gray-400">Syncing with server…</div>
         </div>
 
         <div class="flex flex-col gap-4 mb-8">
-            <a x-bind:href="'/word/create/'" class="w-max text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+            <a href="{{ route('words.create') }}" class="w-max text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer border-none">
                 Add Word
             </a>
         </div>
     </div>
 
-    <div class="mb-12">
+    <div wire:loading wire:target="activeSetName" class="text-sm text-gray-400 mb-8">Loading word list…</div>
 
-        <flux:separator class="mb-8" />
+    <flux:separator class="mb-8" />
 
-        <h2 class="text-xl font-semibold text-green-400">Learned Words</h2>
+    <div class="mb-12" x-data="{ inSetShown: false }">
+
+        <div class="mb-4 flex justify-between" >
+            <h2 class="text-xl font-semibold text-green-400">{{ ucwords($activeSetName) }} Set</h2>
+            <button @click="inSetShown = !inSetShown" class="focus:outline-none">
+                <svg x-show="!inSetShown" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                <svg x-show="inSetShown" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+            </button>
+        </div>
 
         <!-- Desktop Table -->
-        <div class="hidden md:block">
+        <div class="hidden md:block" x-show="inSetShown" wire:transition.scale.origin.top>
             <x-table>
                 <x-slot name="head">
                     <x-table.tr>
@@ -82,19 +166,19 @@ new class extends Component {
                 </x-slot>
 
                 <x-slot name="body">
-                    <template x-for="word in filtered(learnedWords)" x-bind:key="word.id">
-                        <x-table.tr>
+                    <template x-for="word in filteredInSet()" :key="refreshKey + '-' + word.id">
+                        <x-table.tr class="border-b border-zinc-700/60" x-cloak>
                             <x-table.td>
                                 <flux:checkbox.group>
-                                    <flux:checkbox x-bind:checked="word.learned" @click="toggle(word)" />
+                                    <flux:checkbox x-bind:checked="1" @click.stop="toggle(word)" class="cursor-pointer" />
                                 </flux:checkbox.group>
                             </x-table.td>
                             <x-table.td x-text="word.romaji" />
-                            <x-table.td x-text="word.kana" />
+                            <x-table.td><x-hiragana/></x-table.td>
                             <x-table.td x-text="word.meaning" />
                             <x-table.td class="text-right">
                                 <div class="flex items-center gap-2 justify-end">
-                                    <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                    <a x-bind:href="'{{ route('words.edit') }}/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
                                         Edit
                                     </a>
                                     <flux:button
@@ -110,36 +194,29 @@ new class extends Component {
             </x-table>
         </div>
 
-        <!-- Mobile Cards -->
-        <div class="md:hidden space-y-4">
-            <template x-for="word in filtered(learnedWords)" x-bind:key="word.id">
-                <div x-data="{ open: false }" class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
-                    <div class="flex justify-between items-center">
-                        <div class="font-semibold w-1/3" x-text="word.romaji"></div>
-                        <flux:button
-                            @click.stop="playAudio(word.kana)"
-                            icon="play"
-                            class="text-sm cursor-pointer"
-                        />
-                        <button @click="open = !open" class="text-sm text-blue-400 hover:underline">
-                            <span x-show="!open">Show</span><span x-show="open">Hide</span>
-                        </button>
-                    </div>
-                    <div x-show="open" x-transition class="mt-3 space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Kana:</span><span x-text="word.kana" />
+        <div class="md:hidden space-y-4" x-show="inSetShown" wire:transition.scale.origin.top>
+            <template x-for="word in filteredInSet()" x-bind:key="refreshKey + '-' + word.id" x-cloak>
+                <div class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex flex-col gap-4 grow">
+                            <div class="font-semibold w-full" x-text="word.romaji"></div>
+                            <div class="font-semibold w-full"><x-hiragana/></div>
+                            <div x-text="word.meaning"></div>
                         </div>
-                        <div class="flex justify-between">
-                            <span>Meaning:</span><span x-text="word.meaning" />
-                        </div>
-                        <div class="flex justify-between items-center pt-2">
-                            <flux:checkbox.group>
-                                <flux:checkbox x-bind:checked="word.learned" @click="toggle(word)" /><span>Learned</span>
-                            </flux:checkbox.group>
+
+                        <div class="flex flex-col gap-4 items-end">
+                            <flux:button
+                                @click.stop="playAudio(word.kana)"
+                                icon="play"
+                                class="text-sm cursor-pointer"
+                            />
                             <div class="flex items-center gap-2 justify-end">
-                                <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                <a x-bind:href="'{{ route('words.edit') }}/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
                                     Edit
                                 </a>
+                            </div>
+                            <div class="flex gap-4">
+                                <flux:checkbox x-bind:checked="1" @click="toggle(word)" class="cursor-pointer" /><span>In Set</span>
                             </div>
                         </div>
                     </div>
@@ -148,9 +225,8 @@ new class extends Component {
         </div>
     </div>
 
-        <!-- Unlearned Section (same structure) -->
     <div>
-        <h2 class="text-xl font-semibold text-blue-400 mb-4">Unlearned Words</h2>
+        <h2 class="text-xl font-semibold text-blue-400 mb-4">Not In Set</h2>
         <div class="hidden md:block">
             <x-table>
                 <x-slot name="head">
@@ -164,19 +240,19 @@ new class extends Component {
                 </x-slot>
 
                 <x-slot name="body">
-                    <template x-for="word in filtered(unlearnedWords)" x-bind:key="word.id">
-                        <x-table.tr>
+                    <template x-for="word, index in filteredNotInSet()" x-bind:key="refreshKey + '-' + word.id" x-cloak>
+                        <x-table.tr class="border-b border-zinc-700/60">
                             <x-table.td>
                                 <flux:checkbox.group>
-                                    <flux:checkbox x-bind:checked="word.learned" @click="toggle(word)" />
+                                    <flux:checkbox x-bind:checked="0" @click="toggle(word)" class="cursor-pointer" />
                                 </flux:checkbox.group>
                             </x-table.td>
                             <x-table.td x-text="word.romaji" />
-                            <x-table.td x-text="word.kana" />
+                            <x-table.td><x-hiragana/></x-table.td>
                             <x-table.td x-text="word.meaning" />
                             <x-table.td class="text-right">
                                 <div class="flex items-center gap-2 justify-end">
-                                    <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                    <a x-bind:href="'{{ route('words.edit') }}/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
                                         Edit
                                     </a>
                                     <flux:button
@@ -193,38 +269,28 @@ new class extends Component {
         </div>
 
         <div class="md:hidden space-y-4">
-            <template x-for="word in filtered(unlearnedWords)" x-bind:key="word.id">
-                <div x-data="{ open: false }" class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
-                    <div class="flex justify-between items-center">
-                        <div class="font-semibold w-1/3" x-text="word.romaji"></div>
-                        <flux:button
-                            @click.stop="playAudio(word.kana)"
-                            icon="play"
-                            class="text-sm cursor-pointer"
-                        />
-                        <button @click="open = !open" class="text-sm text-blue-400 hover:underline">
-                            <span x-show="!open">Show</span><span x-show="open">Hide</span>
-                        </button>
-                    </div>
-                    <div x-show="open" x-transition class="mt-3 space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span>Kana:</span><span x-text="word.kana" /></div>
-                        <div class="flex justify-between">
-                            <span>Meaning:</span><span x-text="word.meaning" />
+            <template x-for="word in filteredNotInSet()" x-bind:key="refreshKey + '-' + word.id" x-cloak>
+                <div class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex flex-col gap-4 grow">
+                            <div class="font-semibold w-full" x-text="word.romaji"></div>
+                            <div class="font-semibold w-full"><x-hiragana/></div>
+                            <div x-text="word.meaning"></div>
                         </div>
-                        <div class="flex justify-between items-center pt-2">
-                            <flux:checkbox.group>
-                                <flux:checkbox x-bind:checked="word.learned" @click="toggle(word)" /><span>Learned</span>
-                            </flux:checkbox.group>
+
+                        <div class="flex flex-col gap-4 items-end">
+                            <flux:button
+                                @click.stop="playAudio(word.kana)"
+                                icon="play"
+                                class="text-sm cursor-pointer"
+                            />
                             <div class="flex items-center gap-2 justify-end">
-                                <a x-bind:href="'/word/edit/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
+                                <a x-bind:href="'{{ route('words.edit') }}/' + word.id" class="text-md bg-green-700 text-white rounded-xl px-4 py-2 hover:underline cursor-pointer">
                                     Edit
                                 </a>
-                                <flux:button
-                                    @click.stop="playAudio(word.kana)"
-                                    icon="play"
-                                    class="text-sm cursor-pointer"
-                                />
+                            </div>
+                            <div class="flex gap-4">
+                                <flux:checkbox x-bind:checked="0" @click="toggle(word)" class="cursor-pointer" /><span>In Set</span>
                             </div>
                         </div>
                     </div>
@@ -234,58 +300,112 @@ new class extends Component {
     </div>
 </div>
 
+@script
 <script>
-function vocabState(words) {
-  return {
-    search: '',
-    allWords: words,
-    learnedWords: [],
-    unlearnedWords: [],
-    loading: false,
+window.vocabState = function vocabState(words, inSet, sets, all_hiraganas) {
+    return {
+        search: '',
+        allWords: words,
+        inSet: inSet,
+        sets: sets,
+        all_hiraganas: all_hiraganas,
+        page: 1,
+        perPage: 25,
+        refreshKey: 0,
+        pendingRemovals: new Set(),
 
-    init() {
-      this.learnedWords = this.allWords.filter(w => w.learned);
-      this.unlearnedWords = this.allWords.filter(w => !w.learned);
-    },
+        init() {
+            window.addEventListener('set-words-updated', (e) => {
+                let vars = e.detail[0];
+                this.allWords = vars.words;
+                this.inSet = vars.set_words;
+                this.sets = vars.sets;
+            });
+        },
 
-    toggle(word) {
-      const prev = word.learned;
-      word.learned = !prev;
-      this.loading = true;
+        triggerRefresh() {
+            this.refreshKey++;
+        },
 
-      if (word.learned) {
-        this.unlearnedWords = this.unlearnedWords.filter(w => w.id !== word.id);
-        this.learnedWords.push(word);
-      } else {
-        this.learnedWords = this.learnedWords.filter(w => w.id !== word.id);
-        this.unlearnedWords.push(word);
-      }
+        isWordInSet(word) {
+            return this.inSet.filter(w => w.id === word.id).length > 0;
+        },
 
-      $wire.call('toggleLearned', word.id)
-        .then(() => Toast({ text: 'Word updated', variant: 'success' }))
-        .catch(() => {
-          word.learned = prev;
-          if (prev) {
-            this.learnedWords = this.learnedWords.filter(w => w.id !== word.id);
-            this.unlearnedWords.push(word);
-          } else {
-            this.unlearnedWords = this.unlearnedWords.filter(w => w.id !== word.id);
-            this.learnedWords.push(word);
-          }
-          Toast({ text: 'Update failed', variant: 'danger' });
-        })
-        .finally(() => this.loading = false);
-    },
+        toggle(word) {
 
-    filtered(list) {
-      if (!this.search) return list;
-      const s = this.search.toLowerCase();
-      return list.filter(w =>
-        w.romaji.toLowerCase().includes(s) ||
-        w.kana.includes(s) ||
-        w.meaning.toLowerCase().includes(s)
-      );
+            const prev = this.isWordInSet(word);
+
+            const wordClone = { ...word };
+
+            if (prev) {
+                new_list = this.inSet.filter(w => w.id !== word.id);
+            } else {
+                new_list = [...this.inSet, wordClone];
+            }
+
+            Toast('Updating word...', 'info');
+            document.querySelectorAll('ui-checkbox').forEach(c => c.disabled = true);
+
+            $nextTick(() => {
+                this.inSet = new_list;
+
+                $wire.toggleWordInList(word.id)
+                    .then(() => {
+                        Toast('Word updated', 'success');
+                        this.triggerRefresh();
+                    })
+                    .catch(() => {
+                        if (prev) {
+                            this.inSet = [...this.inSet, wordClone];
+                        } else {
+                            this.inSet = this.inSet.filter(w => w.id !== word.id);
+                        }
+                        Toast('Update failed', 'danger');
+                    })
+                    .finally(() => {
+                        this.pendingRemovals.delete(word.id);
+                        document.querySelectorAll('ui-checkbox').forEach(c => c.disabled = false);
+                        this.triggerRefresh();
+                    });
+            })
+        },
+
+        filteredInSet() {
+            let new_list = JSON.parse(JSON.stringify(this.inSet));
+
+            return new_list.filter(w =>
+                !this.pendingRemovals.has(w.id) &&
+                    (
+                        w.romaji.toLowerCase().includes(this.search.toLowerCase()) ||
+                            w.kana.toLowerCase().includes(this.search.toLowerCase()) ||
+                            w.meaning.toLowerCase().includes(this.search.toLowerCase())
+                    )
+            );
+        },
+
+        filteredNotInSet() {
+            let filtered_list =  [];
+
+            for (let word of this.allWords) {
+                if (this.isWordInSet(word)) {
+                    continue;
+                }
+
+                if (
+                    word.romaji.toLowerCase().includes(this.search.toLowerCase()) ||
+                    word.kana.toLowerCase().includes(this.search.toLowerCase()) ||
+                    word.meaning.toLowerCase().includes(this.search.toLowerCase())
+                ) {
+                    filtered_list.push(word);
+                }
+
+                if (filtered_list.length === this.perPage) {
+                    break;
+                }
+            }
+            return filtered_list.slice((this.page - 1) * this.perPage, this.page * this.perPage);
+        }
     }
-  }
 }
 </script>
+@endscript

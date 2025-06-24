@@ -43,7 +43,7 @@ new class extends Component
         );
 
         session()->flash('message', 'Word saved successfully.');
-        redirect()->route('dashboard');
+        redirect()->route('words.index');
     }
 };
 ?>
