@@ -81,7 +81,7 @@ new class extends Component
     </div>
 
     <div class="flex justify-between pt-4">
-        <a href="{{ route('dashboard') }}" class="text-blue-400 hover:underline">← Back to list</a>
+        <a href="{{ route('home') }}" class="text-blue-400 hover:underline">← Back to list</a>
         <button wire:click="save"
             class="bg-blue-600 hover:bg-blue-700 px-4 py-2 text-white rounded shadow transition">
             {{ $wordId ? 'Update Word' : 'Add Word' }}
