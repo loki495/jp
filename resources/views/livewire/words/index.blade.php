@@ -138,22 +138,22 @@ new class extends Component {
 
     <flux:separator class="mb-8" />
 
-    <div class="mb-12" x-data="{ inSetShown: false }">
+    <div class="mb-12" x-data="{ }">
 
         <div class="mb-4 flex justify-between" >
             <h2 class="text-xl font-semibold text-green-400">{{ ucwords($activeSetName) }} Set</h2>
-            <button @click="inSetShown = !inSetShown" class="focus:outline-none">
-                <svg x-show="!inSetShown" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button @click="inSetShow = !inSetShow" class="focus:outline-none" x-show="search.length === 0" x-cloak>
+                <svg x-show="!search.length && !showInSet()" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-                <svg x-show="inSetShown" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
+                <svg x-show="showInSet" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                 </svg>
             </button>
         </div>
 
         <!-- Desktop Table -->
-        <div class="hidden md:block" x-show="inSetShown" wire:transition.scale.origin.top>
+        <div class="hidden md:block" x-show="showInSet" wire:transition.scale.origin.top>
             <x-table>
                 <x-slot name="head">
                     <x-table.tr>
@@ -194,7 +194,7 @@ new class extends Component {
             </x-table>
         </div>
 
-        <div class="md:hidden space-y-4" x-show="inSetShown" wire:transition.scale.origin.top>
+        <div class="md:hidden space-y-4" x-show="showInSet" wire:transition.scale.origin.top>
             <template x-for="word in filteredInSet()" x-bind:key="refreshKey + '-' + word.id" x-cloak>
                 <div class="bg-gray-800 text-white rounded-lg shadow border px-4 py-3">
                     <div class="flex justify-between items-start">
@@ -219,6 +219,7 @@ new class extends Component {
                             </div>
                         </div>
                     </div>
+                    <div class="mt-2" x-text="word.meaning"></div>
                 </div>
             </template>
         </div>
@@ -312,6 +313,7 @@ window.vocabState = function vocabState(words, inSet, sets, all_kana) {
         perPage: 25,
         refreshKey: 0,
         pendingRemovals: new Set(),
+        inSetShow: false,
 
         init() {
             window.addEventListener('set-words-updated', (e) => {
@@ -403,6 +405,10 @@ window.vocabState = function vocabState(words, inSet, sets, all_kana) {
                 }
             }
             return filtered_list.slice((this.page - 1) * this.perPage, this.page * this.perPage);
+        },
+
+        showInSet() {
+            return this.inSetShow || this.search.length > 0;
         }
     }
 }

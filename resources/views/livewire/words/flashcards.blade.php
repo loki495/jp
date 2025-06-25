@@ -146,7 +146,8 @@ new class extends Component
         >English</button>
 
     </div>
-    <span x-text="flippedFalseLocked"></span>
+
+    <span class="text-sm text-zinc-400 text-center mt-2 md:hidden">Swipe to flip</span>
 
     <!-- Card -->
     <div
@@ -239,14 +240,15 @@ new class extends Component
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
     >
+
         <!-- Front Face -->
         <div x-ref="front"
-            class="relative w-full md:min-w-max rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold text-6xl flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12"
+            class="relative w-full md:min-w-max rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12"
             wire:loading.class="opacity-0"
             @click.stop="flip"
         >
             @if($mode === 'romaji')
-                <div class="text-6xl">
+                <div class="md:mt-2 text-6xl">
                     {{ $currentWord['romaji'] ?? 'No word' }}
                 </div>
                 <flux:button
@@ -266,11 +268,12 @@ new class extends Component
                     class="mt-4 text-sm text-blue-300 underline hover:text-blue-400"
                 />
             @else
-                <div>
+                <div class="md:mt-2 ">
                     <span class="text-2xl">{{ $currentWord['meaning'] ?? 'No word' }}</span>
                 </div>
             @endif
 
+            <button class="hidden md:flex absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" wire:click.stop="next" aria-hidden="true">Next</button>
         </div>
 
         <!-- Back Face -->
@@ -293,7 +296,9 @@ new class extends Component
 2               class="mt-0 text-sm text-blue-300 underline hover:text-blue-400"
             />
 
+            <button class="hidden md:flex absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" wire:click.stop="next" aria-hidden="true">Next</button>
         </div>
+
     </div>
 
     <style>
