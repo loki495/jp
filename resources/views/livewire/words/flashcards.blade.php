@@ -256,8 +256,8 @@ new class extends Component
                     class="mt-4 text-sm text-blue-300 underline hover:text-blue-400"
                 />
             @elseif($mode === 'kana')
-                <div class="text-6xl">
-                    <x-hiragana :word="$currentWord" hideRomaji="true" />
+                <div class="md:mt-2 text-6xl">
+                    <x-kana :word="$currentWord" hideRomaji="true" />
                 </div>
                 <flux:button
                     @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
@@ -279,11 +279,11 @@ new class extends Component
             @click.stop="flip"
             wire:loading.remove
         >
-            <div class="text-6xl text-blue-500 font-bold w-full">
-                <x-hiragana :word="$currentWord" />
+            <div class="md:mt-2 text-6xl text-blue-500 font-bold w-full flex justify-center">
+                <x-kana :word="$currentWord" />
             </div>
             <div class="text-5xl text-green-500 font-bold my-2 w-full">{{ $currentWord['romaji'] ?? '' }}</div>
-            @if ($activeSetName !== 'hiragana')
+            @if ($activeSetName !== 'kana')
             <div class="text-2xl text-yellow-500 w-full">{{ $currentWord['meaning'] ?? '' }}</div>
             @endif
             <flux:button

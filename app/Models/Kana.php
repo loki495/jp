@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Hiragana extends Model
+class Kana extends Model
 {
     //
 }

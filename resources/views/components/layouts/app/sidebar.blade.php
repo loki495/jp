@@ -15,7 +15,7 @@
                 <flux:navlist.group heading="Words" class="grid">
                     <flux:navlist.item icon="list-bullet" :href="route('words.index')" :current="request()->routeIs('words.index')" wire:navigate>{{ __('Word List') }}</flux:navlist.item>
                     <flux:navlist.item icon="plus" :href="route('words.create')" :current="request()->routeIs('words.create')" wire:navigate>{{ __('Add Word') }}</flux:navlist.item>
-                    <flux:navlist.item icon="bolt" :href="route('hiragana.index')" :current="request()->routeIs('hiragana.index')" wire:navigate>{{ __('Hiragana') }}</flux:navlist.item>
+                    <flux:navlist.item icon="bolt" :href="route('kana.index')" :current="request()->routeIs('kana.index')" wire:navigate>{{ __('Kana') }}</flux:navlist.item>
                     <flux:navlist.item icon="calendar" :href="route('words.flashcards')" :current="request()->routeIs('words.flashcards')" wire:navigate>{{ __('Flashcards') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>

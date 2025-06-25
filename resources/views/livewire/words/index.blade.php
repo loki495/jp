@@ -3,7 +3,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\Hiragana;
+use App\Models\Kana;
 use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 use App\Models\PracticeSet;
@@ -71,10 +71,10 @@ new class extends Component {
                 return !in_array($word->id, $inSet);
             });
 
-        $hiraganas = Hiragana::all()
-            ->mapWithKeys(function ($hiragana) use ($inSet) {
+        $kanas = Kana::all()
+            ->mapWithKeys(function ($kana) use ($inSet) {
                 return [
-                    $hiragana['kana'] => $hiragana['romaji'],
+                    $kana['kana'] => $kana['romaji'],
                 ];
             });
 
@@ -82,7 +82,7 @@ new class extends Component {
             'words' => $this->words,
             'set_words' => $this->set_words,
             'sets' => $this->sets,
-            'all_hiraganas' => $hiraganas,
+            'all_kana' => $kanas,
         ];
     }
 
@@ -94,7 +94,7 @@ new class extends Component {
 ?>
 
 <div
-    x-data="vocabState(@js($words), @js($set_words), @js($sets), @js($all_hiraganas))"
+    x-data="vocabState(@js($words), @js($set_words), @js($sets), @js($all_kana))"
     x-init="init()"
     class="max-w-6xl mx-auto px-4 py-6 dark"
 >
@@ -174,7 +174,7 @@ new class extends Component {
                                 </flux:checkbox.group>
                             </x-table.td>
                             <x-table.td x-text="word.romaji" />
-                            <x-table.td><x-hiragana/></x-table.td>
+                            <x-table.td><x-kana/></x-table.td>
                             <x-table.td x-text="word.meaning" />
                             <x-table.td class="text-right">
                                 <div class="flex items-center gap-2 justify-end">
@@ -200,8 +200,7 @@ new class extends Component {
                     <div class="flex justify-between items-start">
                         <div class="flex flex-col gap-4 grow">
                             <div class="font-semibold w-full" x-text="word.romaji"></div>
-                            <div class="font-semibold w-full"><x-hiragana/></div>
-                            <div x-text="word.meaning"></div>
+                            <div class="font-semibold w-full"><x-kana/></div>
                         </div>
 
                         <div class="flex flex-col gap-4 items-end">
@@ -248,7 +247,7 @@ new class extends Component {
                                 </flux:checkbox.group>
                             </x-table.td>
                             <x-table.td x-text="word.romaji" />
-                            <x-table.td><x-hiragana/></x-table.td>
+                            <x-table.td><x-kana/></x-table.td>
                             <x-table.td x-text="word.meaning" />
                             <x-table.td class="text-right">
                                 <div class="flex items-center gap-2 justify-end">
@@ -274,7 +273,7 @@ new class extends Component {
                     <div class="flex justify-between items-start">
                         <div class="flex flex-col gap-4 grow">
                             <div class="font-semibold w-full" x-text="word.romaji"></div>
-                            <div class="font-semibold w-full"><x-hiragana/></div>
+                            <div class="font-semibold w-full"><x-kana/></div>
                             <div x-text="word.meaning"></div>
                         </div>
 
@@ -302,13 +301,13 @@ new class extends Component {
 
 @script
 <script>
-window.vocabState = function vocabState(words, inSet, sets, all_hiraganas) {
+window.vocabState = function vocabState(words, inSet, sets, all_kana) {
     return {
         search: '',
         allWords: words,
         inSet: inSet,
         sets: sets,
-        all_hiraganas: all_hiraganas,
+        all_kana: all_kana,
         page: 1,
         perPage: 25,
         refreshKey: 0,

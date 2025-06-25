@@ -66,7 +66,7 @@ class PracticeSet
                 ->where('learned', true)
                 ->get();
         } elseif ($this->name === static::HIRAGANA_SET) {
-            $data = Hiragana::query()
+            $data = Kana::query()
                 ->where(function ($query) use ($search) {
                     $query
                         ->where('romaji', 'like', "%{$search}%")
