@@ -15,7 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('/words/edit/{wordId?}', 'words.edit')->name('words.edit');
     Volt::route('/words/flashcards', 'words.flashcards')->name('words.flashcards');
     Volt::route('/kana', 'kana.index')->name('kana.index');
-
+    Volt::route('/particles', 'particles.index')->name('particles.index');
 });
 
 Route::get('/api/practice-lists', function () {
