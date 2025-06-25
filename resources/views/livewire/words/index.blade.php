@@ -182,7 +182,7 @@ new class extends Component {
         </div>
 
         <!-- Desktop Table -->
-        <div class="hidden md:block" x-show="true" wire:transition.scale.origin.top>
+        <div class="hidden md:block" x-show="inSetShow" wire:transition.scale.origin.top>
             <x-table>
                 <x-slot name="head">
                     <x-table.tr>

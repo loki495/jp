@@ -20,6 +20,8 @@ new class extends Component {
 
         if ($this->type) {
             $kana_list = $kana_list->where('type', $this->type);
+        } else {
+            $kana_list = $kana_list->whereIn('type', ['hiragana', 'katakana']);
         }
 
         return [
