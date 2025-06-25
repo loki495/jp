@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('onyomi')->nullable();
             $table->string('kunyomi')->nullable();
             $table->string('meaning')->nullable();
+            $table->string('examples')->nullable();
             $table->boolean('learned')->default(false);
             $table->timestamps();
         });
