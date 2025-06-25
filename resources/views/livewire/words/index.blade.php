@@ -57,7 +57,36 @@ new class extends Component {
     {
         $this->updateSetsAndWords();
 
-        $inSet = $this->set_words;
+        $inSet = collect($this->set_words)
+            ->map(function ($word) {
+                $word['characters'] = collect(mb_str_split($word['kana']))
+                    ->map(function ($char) use ($word) {
+                        if ($char == 'ー') {
+                            return [
+                                'kana' => $char,
+                                'romaji' => 'long vowel',
+                            ];
+                        }
+                        $kana = Kana::where('kana', $char)->first();
+                        if (!$kana) {
+                            return [
+                                'kana' => $char,
+                                'romaji' => '',
+                            ];
+                        }
+                        $romaji = $kana['romaji'];
+                        if ($kana['type'] == 'kanji') {
+                            $romaji = $kana->guessRomajiForKanjiInWord($word);
+                        }
+
+                        $char = [
+                            'kana' => $char,
+                            'romaji' => $romaji,
+                        ];
+                        return $char;
+                    })->toArray();
+                return $word;
+            })->toArray();
 
         $this->words = Word::query()
             ->when($this->search, function ($query, $search) {
@@ -153,7 +182,7 @@ new class extends Component {
         </div>
 
         <!-- Desktop Table -->
-        <div class="hidden md:block" x-show="showInSet" wire:transition.scale.origin.top>
+        <div class="hidden md:block" x-show="true" wire:transition.scale.origin.top>
             <x-table>
                 <x-slot name="head">
                     <x-table.tr>

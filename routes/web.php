@@ -31,3 +31,52 @@ Route::post('/api/practice-lists/{name}', function ($name) {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/test', function () {
+    return;
+    $kanji = \App\Models\Kana::find(732);
+    dd($kanji->toArray());
+});
+
+Route::get('/convert-kanji-csv', function () {
+    return;
+    $url = 'https://raw.githubusercontent.com/kanjialive/kanji-data-media/master/language-data/ka_data.csv';
+    $in = fopen($url, 'r');
+    $out = fopen(storage_path('app/kanji_full_with_romaji.csv'), 'w');
+
+    $headers = fgetcsv($in);
+
+    // Adjust columns if naming differs slightly
+    fputcsv($out, [
+        'kanji',
+        'onyomi',
+        'kunyomi',
+        'meanings',
+    ]);
+
+    while ($row = fgetcsv($in)) {
+
+        $kanji = $row[0];
+        $onyomi = $row[7];
+        $onyomi_romaji = $row[8];
+        $kunyomi = $row[5];
+        $kunyomi_romaji = $row[6];
+        $meanings = collect(json_decode($row[9]))
+            ->map(function ($meaning) {
+                return $meaning[0] . '(' . $meaning[1] . ')';
+            })->implode(', ');
+
+        $data = [
+            $kanji,
+            $onyomi . ' (' . $onyomi_romaji . ')',
+            $kunyomi . ' (' . $kunyomi_romaji . ')',
+            $meanings,
+        ];
+        fputcsv($out, $data);
+    }
+
+    fclose($in);
+    fclose($out);
+
+    return 'Output saved to storage/app/kanji_full_with_romaji.csv';
+});
