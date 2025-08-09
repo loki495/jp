@@ -49,7 +49,7 @@ new class extends Component
         if (count($words)) {
             $this->currentWord = $words
                 ->filter(function ($word) use ($currentWord) {
-                    return $word['id'] != ($currentWord['id'] ?? null);
+                    return $word['learned'] && ($word['id'] != ($currentWord['id'] ?? null));
                 })
                 ->random();
         }
@@ -147,7 +147,7 @@ new class extends Component
 
     </div>
 
-    <span class="text-sm text-zinc-400 text-center mt-2 md:hidden">Swipe to flip</span>
+    <span class="text-sm text-zinc-400 text-center mt-2 md:hidden">Swipe for next</span>
 
     <!-- Card -->
     <div
@@ -235,7 +235,7 @@ new class extends Component
         x-ref="card"
         class="relative w-full transition-transform duration-300 transform-style preserve-3d cursor-pointer"
         :class="{ 'rotate-y-180': flipped }"
-        @click="flip"
+        @click="if (!$event.target.closest('.no-flip')) flip()"
         @touchstart="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd"
@@ -245,7 +245,7 @@ new class extends Component
         <div x-ref="front"
             class="relative w-full md:min-w-max rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12"
             wire:loading.class="opacity-0"
-            @click.stop="flip"
+            @click.stop="if (!$event.target.closest('.no-flip')) flip();"
         >
             @if($mode === 'romaji')
                 <div class="md:mt-2 text-6xl">
@@ -279,21 +279,24 @@ new class extends Component
         <!-- Back Face -->
         <div x-ref="back"
             class="absolute w-full break-all max-w-full whitespace-normal top-0 left-1/2 -translate-x-1/2 rounded-lg shadow-lg bg-zinc-500/30 rotate-y-180 text-center backface-hidden flex flex-col gap-2 items-center justify-center p-4 transition pt-12"
-            @click.stop="flip"
+            @click.stop="if (!$event.target.closest('.no-flip')) flip()"
             wire:loading.remove
         >
             <div class="md:mt-2 text-6xl text-blue-500 font-bold w-full flex justify-center">
                 <x-kana :word="$currentWord" />
             </div>
-            <div class="text-5xl text-green-500 font-bold my-2 w-full">{{ $currentWord['romaji'] ?? '' }}</div>
+
             @if ($activeSetName !== 'kana')
             <div class="text-2xl text-yellow-500 w-full">{{ $currentWord['meaning'] ?? '' }}</div>
             @endif
+
             <flux:button
                 @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
                 icon="play"
                 variant="subtle"
-2               class="mt-0 text-sm text-blue-300 underline hover:text-blue-400"
+                class="mt-0 text-sm text-blue-300 underline hover:text-blue-400"
+                @touchstart.stop
+                @touchend.stop
             />
 
             <button class="hidden md:flex absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" wire:click.stop="next" aria-hidden="true">Next</button>
