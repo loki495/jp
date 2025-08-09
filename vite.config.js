@@ -6,11 +6,13 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
     server: {
-        host: '0.0.0.0', // allows access from other devices
+        host: '0.0.0.0',
         hmr: {
-            host: 'jp.dev.local.test', // your laptop's IP
+            host: 'vite.jp.dev.local.test',
+            clientPort: 80
         },
         cors: true,
+        allowedHosts: ['vite.jp.dev.local.test'],
     },
     plugins: [
         laravel({

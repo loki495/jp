@@ -1,5 +1,3 @@
-version: "3.8"
-
 volumes:
   mysql-data: {}
 
@@ -22,13 +20,15 @@ services:
              echo '</Directory>' >> /etc/apache2/conf-enabled/allow-override.conf &&
              sed -i 's|DocumentRoot .*|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf &&
              chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database 2>/dev/null || true &&
-             find /var/www/html/storage -type d -exec chmod 775 {} \; 2>/dev/null || true &&
-             find /var/www/html/bootstrap/cache -type d -exec chmod 775 {} \; 2>/dev/null || true &&
-             find /var/www/html/database -type d -exec chmod 775 {} \; 2>/dev/null || true &&
-             find /var/www/html/storage -type f -exec chmod 644 {} \; 2>/dev/null || true &&
-             find /var/www/html/bootstrap/cache -type d -exec chmod 644 {} \; 2>/dev/null || true &&
-             find /var/www/html/database -type f -exec chmod 644 {} \; 2>/dev/null || true &&
-             apache2-foreground"
+             find /var/www/html/storage -type d -exec chmod 775 {} \\; 2>/dev/null || true &&
+             find /var/www/html/bootstrap/cache -type d -exec chmod 775 {} \\; 2>/dev/null || true &&
+             find /var/www/html/database -type d -exec chmod 775 {} \\; 2>/dev/null || true &&
+             find /var/www/html/storage -type f -exec chmod 644 {} \\; 2>/dev/null || true &&
+             find /var/www/html/storage/logs -type f -exec chmod 777 {} \\; 2>/dev/null || true &&
+             find /var/www/html/database/database.sqlite -type f -exec chmod 777 {} \\; 2>/dev/null || true &&
+             find /var/www/html/bootstrap/cache -type f -exec chmod 644 {} \\; 2>/dev/null || true &&
+             find /var/www/html/database -type f -exec chmod 644 {} \\; 2>/dev/null || true &&
+             exec apache2-foreground"
     networks:
       - web
 
@@ -37,13 +37,13 @@ services:
     container_name: jp-vite
     working_dir: /var/www/html
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
-
     volumes:
       - ./:/var/www/html
-    ports:
-      - "3000:3000"
-      - "5173:5173"
-
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jp-vite.rule=Host(`vite.jp.dev.local.test`)"
+      - "traefik.http.routers.jp-vite.entrypoints=web"
+      - "traefik.http.services.jp-vite.loadbalancer.server.port=5173"
     networks:
       - web
 
