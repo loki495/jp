@@ -46,8 +46,27 @@ new class extends Component {
     public function updatedActiveSetName()
     {
         $this->updateSetsAndWords();
+        $words = $this->words();
+        if ($this->search) {
+            $words = $words->orderBy(
+                '(
+                    (
+                        (kana like "' . $this->search . ') * 4) +
+                        (romaji like "' . $this->search . ') * 4) +
+                        (meaning like "' . $this->search . ') * 4) +
+                    ) +
+                    (
+                        (kana like "' . $this->search . '%) * 2) +
+                        (romaji like "' . $this->search . '%) * 2) +
+                        (meaning like "' . $this->search . '%) * 2) +
+                    ) +
+                    0
+                    ) DESC');
+        }
+        $words->ddRawSql();
+        $words = $words->get();
         $this->dispatch('set-words-updated', [
-            'words' => $this->words,
+            'words' => $words,
             'set_words' => $this->set_words,
             'sets' => $this->sets,
         ]);
@@ -400,10 +419,42 @@ window.vocabState = function vocabState(words, inSet, sets, all_kana) {
             })
         },
 
+        calcWordSearchScore(word, search) {
+
+            if (word.romaji == 'onigiri') debugger;
+
+            let score = 0;
+            search = search.toLowerCase();
+
+            score += word.romaji.toLowerCase() == search ? 8 : 0;
+            score += word.kana == search ? 8 : 0;
+            score += word.meaning.toLowerCase() == search ? 6 : 0;
+
+            score += word.kana.startsWith(search) ? 4 : 0;
+            score += word.romaji.toLowerCase().startsWith(search) ? 4 : 0;
+            score += word.meaning.toLowerCase().startsWith(search) ? 2 : 0;
+
+            return score
+        },
+
+        sortWords(words) {
+            let calcFunc = this.calcWordSearchScore;
+            let search = this.search;
+
+            return words.sort(function (a, b) {
+                let scoreA = calcFunc(a, search);
+                let scoreB = calcFunc(b, search);
+
+                let val = (scoreA > scoreB) ? -1 : (scoreA < scoreB) ? 1 : (a.romaji < b.romaji) ? -1 : (a.romaji > b.romaji) ? 1 : 0;;
+
+                return val;
+            })
+        },
+
         filteredInSet() {
             let new_list = JSON.parse(JSON.stringify(this.inSet));
 
-            return new_list.filter(w =>
+            new_list = new_list.filter(w =>
                 !this.pendingRemovals.has(w.id) &&
                     (
                         w.romaji.toLowerCase().includes(this.search.toLowerCase()) ||
@@ -411,6 +462,12 @@ window.vocabState = function vocabState(words, inSet, sets, all_kana) {
                             w.meaning.toLowerCase().includes(this.search.toLowerCase())
                     )
             );
+
+            if (this.search) {
+                new_list = this.sortWords(new_list);
+            }
+
+            return new_list;
         },
 
         filteredNotInSet() {
@@ -433,7 +490,14 @@ window.vocabState = function vocabState(words, inSet, sets, all_kana) {
                     break;
                 }
             }
-            return filtered_list.slice((this.page - 1) * this.perPage, this.page * this.perPage);
+
+            filtered_list = filtered_list.slice((this.page - 1) * this.perPage, this.page * this.perPage);
+
+            if (this.search) {
+                filtered_list = this.sortWords(filtered_list)
+            }
+
+            return filtered_list;
         },
 
         showInSet() {
