@@ -295,8 +295,8 @@ new class extends Component
                 icon="play"
                 variant="subtle"
                 class="mt-0 text-sm text-blue-300 underline hover:text-blue-400"
-                @touchstart.stop
-                @touchend.stop
+                @touchstart.stop=''
+                @touchend.stop=''
             />
 
             <button class="hidden md:flex absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" wire:click.stop="next" aria-hidden="true">Next</button>
