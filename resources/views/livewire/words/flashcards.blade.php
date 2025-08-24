@@ -102,7 +102,7 @@ new class extends Component
 
     }"
     x-init="init"
-    class=" card-wrapper w-fit flex flex-col justify-center items-center gap-4 perspective max-w-screen max-w-screen-sm mx-auto"
+    class=" card-wrapper w-fit flex flex-col justify-center items-center gap-4 perspective max-w-screen max-w-(--breakpoint-sm) mx-auto"
 >
     @teleport('body')
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
@@ -126,21 +126,21 @@ new class extends Component
             wire:click="setMode('romaji')"
             @click="flip(false)"
             class="px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-blue-500/20 hover:bg-blue-700/60"
-            :class="{ '!bg-blue-800/70': $wire.mode === 'romaji' }"
+            :class="{ 'bg-blue-800/70!': $wire.mode === 'romaji' }"
             aria-pressed="{{ $mode === 'romaji' ? 'true' : 'false' }}"
         >Romaji</button>
         <button
             wire:click="setMode('kana')"
             @click="flip(false)"
             class="px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-blue-500/20 hover:bg-blue-700/60"
-            :class="{ '!bg-blue-800/70': $wire.mode === 'kana' }"
+            :class="{ 'bg-blue-800/70!': $wire.mode === 'kana' }"
             aria-pressed="{{ $mode === 'kana' ? 'true' : 'false' }}"
         >Kana</button>
         <button
             wire:click="setMode('meaning')"
             @click="flip(false)"
             class="px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition {{ $activeSetName == PracticeSet::HIRAGANA_SET ? 'bg-gray-600 opacity-50 cursor-not-allowed' : 'bg-blue-500/20 hover:bg-blue-700/60' }}"
-            :class="{ '!bg-blue-800/70': $wire.mode === 'meaning' }"
+            :class="{ 'bg-blue-800/70!': $wire.mode === 'meaning' }"
             {{ $activeSetName == PracticeSet::HIRAGANA_SET ? 'disabled' : '' }}
             aria-pressed="{{ $mode === 'meaning' ? 'true' : 'false' }}"
         >English</button>
