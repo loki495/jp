@@ -102,7 +102,7 @@ new class extends Component
 
     }"
     x-init="init"
-    class=" card-wrapper w-fit flex flex-col justify-center items-center gap-4 perspective max-w-screen max-w-(--breakpoint-sm) mx-auto"
+    class=" card-wrapper w-fit flex flex-col justify-center items-center gap-4 perspective max-w-screen max-w-(--breakpoint-sm) mx-auto touch-pan-x select-none"
 >
     @teleport('body')
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
@@ -233,7 +233,7 @@ new class extends Component
             }
         }"
         x-ref="card"
-        class="relative w-full transition-transform duration-300 transform-style preserve-3d cursor-pointer"
+        class="relative w-full transition-transform duration-300 transform-style preserve-3d cursor-pointer touch-pan-x select-none"
         :class="{ 'rotate-y-180': flipped }"
         @click="if (!$event.target.closest('.no-flip')) flip()"
         @touchstart="handleTouchStart"
@@ -243,7 +243,7 @@ new class extends Component
 
         <!-- Front Face -->
         <div x-ref="front"
-            class="relative w-full md:min-w-max rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12"
+            class="relative w-full md:min-w-max rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12 touch-pan-x select-none"
             wire:loading.class="opacity-0"
             @click.stop="if (!$event.target.closest('.no-flip')) flip();"
         >
@@ -278,7 +278,7 @@ new class extends Component
 
         <!-- Back Face -->
         <div x-ref="back"
-            class="absolute w-full break-all max-w-full whitespace-normal top-0 left-1/2 -translate-x-1/2 rounded-lg shadow-lg bg-zinc-500/30 rotate-y-180 text-center backface-hidden flex flex-col gap-2 items-center justify-center p-4 transition pt-12"
+            class="absolute w-full break-all max-w-full whitespace-normal top-0 left-1/2 -translate-x-1/2 rounded-lg shadow-lg bg-zinc-500/30 rotate-y-180 text-center backface-hidden flex flex-col gap-2 items-center justify-center p-4 transition pt-12 touch-pan-x select-none"
             @click.stop="if (!$event.target.closest('.no-flip')) flip()"
             wire:loading.remove
         >
