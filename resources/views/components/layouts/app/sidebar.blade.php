@@ -16,6 +16,7 @@
                     <flux:navlist.item icon="list-bullet" :href="route('words.index')" :current="request()->routeIs('words.index')" wire:navigate>{{ __('Word List') }}</flux:navlist.item>
                     <flux:navlist.item icon="plus" :href="route('words.create')" :current="request()->routeIs('words.create')" wire:navigate>{{ __('Add Word') }}</flux:navlist.item>
                     <flux:navlist.item icon="bolt" :href="route('kana.index')" :current="request()->routeIs('kana.index')" wire:navigate>{{ __('Kana') }}</flux:navlist.item>
+                    <flux:navlist.item icon="bolt" :href="route('kana.practice')" :current="request()->routeIs('kana.practice')" wire:navigate>{{ __('Kana Practice') }}</flux:navlist.item>
                     <flux:navlist.item icon="calendar" :href="route('words.flashcards')" :current="request()->routeIs('words.flashcards')" wire:navigate>{{ __('Flashcards') }}</flux:navlist.item>
                     <flux:navlist.item icon="folder-plus" :href="route('particles.index')" :current="request()->routeIs('particles.index')" wire:navigate>{{ __('Particles') }}</flux:navlist.item>
                 </flux:navlist.group>
