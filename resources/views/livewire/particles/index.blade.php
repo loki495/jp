@@ -75,6 +75,7 @@ new class extends Component {
 function playAudio(text) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ja-JP';
+    utterance.rate = 0.1;
     speechSynthesis.speak(utterance);
 }
 </script>

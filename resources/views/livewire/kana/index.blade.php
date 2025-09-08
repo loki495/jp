@@ -52,13 +52,13 @@ new class extends Component {
                 <flux:select.option value="katakana">Katakana</flux:select.option>
         </flux:select>
     </div>
-    <div class="flex flex-col gap-4">
-        <div class="flex items-center gap-4 mb-4 w-full flex-wrap border border-zinc-600 p-2 rounded-xl bg-zinc-700">
+    <div class="flex flex-col gap-4 main-content">
+        <div class="kana-group flex items-center gap-4 mb-4 w-full flex-wrap border border-zinc-600 p-2 rounded-xl bg-zinc-700">
             @foreach ($kana_list as $index => $kana)
             <x-kana :kana="$kana" :isLearned="$kana->learned" checkboxEvent="toggle" wire:key="{{ $kana->id }}-{{ $kana->learned }}" data-index="{{ $index }}"/>
             @if ($index == 45 || $index == 70)
         </div>
-        <div class="flex items-center gap-4 mb-4 w-full flex-wrap border border-zinc-600 p-2 rounded-xl bg-zinc-700">
+        <div class="kana-group flex items-center gap-4 mb-4 w-full flex-wrap border border-zinc-600 p-2 rounded-xl bg-zinc-700">
             @endif
             @endforeach
         </div>
