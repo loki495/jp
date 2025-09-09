@@ -21,6 +21,27 @@ new class extends Component {
         'n' => [21,22,23,24,25],
     ];
 
+    public $message = '';
+
+    #[Session]
+    public $count = 0;
+
+    #[Session]
+    public $correct = 0;
+
+    #[Session]
+    public $wrong = 0;
+
+    #[Session]
+    public $done = 0;
+
+    public $solutions = [];
+
+    public $max_solutions = 4;
+
+    #[Session]
+    public $solutions_tried = [];
+
     #[Session]
     public $selected_groups = [];
 
@@ -30,12 +51,16 @@ new class extends Component {
     public $max_length = 10;
 
     public $chosen_word;
+    public $chosen_kana;
+    public $chosen_romaji;
 
     public function mount() {
         $this->next();
     }
 
     public function generateWord() {
+        $this->done = false;
+
         $groups = collect($this->kana_grouping)->mapWithKeys(function ($list, $key) {
             return [$key => Kana::query()->whereIn('id', $list)->get()->toArray() ];
         });
@@ -52,6 +77,21 @@ new class extends Component {
 
         $this->chosen_word = Collection::times($current_length, fn() => $selected->random());
         $this->chosen_kana = $this->chosen_word->map(fn($kana) => $kana['kana'])->implode('');
+        $this->chosen_romaji = $this->chosen_word->map(fn($kana) => $kana['romaji'])->implode('');
+
+        $this->solutions = [];
+        while (count($this->solutions) < $this->max_solutions - 1) {
+            $solution = Collection::times($current_length, fn() => $selected->random());
+            if ($solution != $this->chosen_word && !in_array($solution->map(fn($kana) => $kana['romaji'])->implode(''), $this->solutions)) {
+                $this->solutions[] = $solution->map(fn($kana) => $kana['romaji'])->implode('');
+            }
+        }
+
+        $this->solutions[] = $this->chosen_word->map(fn($kana) => $kana['romaji'])->implode('');
+        $this->solutions = array_values($this->solutions);
+        shuffle($this->solutions);
+
+        $this->solutions_tried = [];
     }
 
     public function updated() {
@@ -61,44 +101,77 @@ new class extends Component {
     public function next() {
         $this->generateWord();
         $this->dispatch('reset-alpine-open');
+        $this->message = '';
+        $this->count++;
     }
 
     #[Computed]
     public function chosen_word_kana() {
         return $this->chosen_word->map(fn($kana) => $kana['kana'])->implode('');
     }
+
+    public function resetCount() {
+        $this->count = 0;
+        $this->correct = 0;
+        $this->wrong = 0;
+        $this->next();
+    }
+
+    public function check($solution_index) {
+        $solution = $this->solutions[$solution_index];
+        if ($solution == $this->chosen_romaji) {
+            $this->correct++;
+            $this->done = true;
+            $this->message = 'Correct!';
+        } else {
+            $this->wrong++;
+            $this->message = 'Wrong!';
+        }
+        $this->solutions_tried[] = $solution_index;
+    }
 }
 
 ?>
-<div
-    class="max-w-6xl mx-auto px-4 py-6 dark"
->
+<div class="max-w-6xl mx-auto px-4 py-0 dark" >
+
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
 
-    <h1 class="text-3xl font-bold text-center mb-8 text-white">Kana Practice</h1>
+    <h1 class="text-3xl font-bold text-center mb-2 text-white">Kana Practice</h1>
 
-    <div class="mb-4">
-        Practicing Groups: {{ empty($selected_groups) ? 'All' : strtoupper(implode(', ', $selected_groups)) }} ({{ count($chosen_word) }} chars / {{ $length }} max)
-    </div>
-
-    <flux:fieldset>
-        <div class="flex gap-6 *:gap-x-2">
-            <flux:checkbox.group wire:model.live="selected_groups" class="flex [&>[data-flux-field]:last-child]:mb-4!">
-                @foreach (array_keys($kana_grouping) as $group)
-                    <div class="border border-zinc-600 p-2 rounded-xl bg-zinc-700">
-                        <flux:checkbox label="{{ strtoupper($group) }}" value="{{ $group }}" />
-                    </div>
-                @endforeach
-            </flux:checkbox.group>
+    <div class="flex flex-col md:flex-row md:justify-between">
+        <div class="mb-4 flex flex-col">
+            <div>Practicing Groups:</div>
+           <div>{{ empty($selected_groups) ? 'All' : strtoupper(implode(', ', $selected_groups)) }} ({{ count($chosen_word) }} chars / {{ $length }} max)</div>
         </div>
 
-        <div class="flex gap-4 py-4 items-centea">
-            <label class="text-white font-semibold flex items-center gap-4">
-                <span>Max Length:</span>
-                <input wire:model.live.change="length" type="range" min="1" max="{{ $max_length }}" class="bg-zinc-800 text-white rounded" />
-                <span class="ml-2">{{ $length }} / {{ $max_length }}</span>
-            </label>
-    </flux:fieldset>
+        <details class="mb-4 group border border-zinc-600 p-2 rounded-xl bg-zinc-700">
+            <summary class="text-white font-semibold flex items-center gap-4 cursor-pointer flex md:justify-end">
+                <span>Config:</span>
+                <flux:icon.chevron-down class="w-4 h-4 text-zinc-500 dark:text-zinc-400 group-open:rotate-180 transition" />
+            </summary>
+
+            <flux:fieldset>
+                <div class="flex gap-6 *:gap-x-2 mt-4">
+                    <flux:checkbox.group wire:model.live="selected_groups" class="flex [&>[data-flux-field]:last-child]:mb-4!">
+                        @foreach (array_keys($kana_grouping) as $group)
+                            <div class="border border-zinc-600 p-2 rounded-xl bg-zinc-700">
+                                <flux:checkbox label="{{ strtoupper($group) }}" value="{{ $group }}" />
+                            </div>
+                        @endforeach
+                    </flux:checkbox.group>
+                </div>
+
+                <div class="flex gap-4 py-4 items-centea">
+                    <label class="text-white font-semibold flex items-center gap-4">
+                        <span>Max Length:</span>
+                        <input wire:model.live.change="length" type="range" min="1" max="{{ $max_length }}" class="bg-zinc-800 text-white rounded" />
+                        <span class="ml-2">{{ $length }} / {{ $max_length }}</span>
+                    </label>
+                </div>
+            </flux:fieldset>
+
+        </details>
+    </div>
 
     <div class="flex flex-col gap-4 justify-center items-center">
         <div class="flex gap-2 flex-wrap justify-center" x-data="{ chosen_word: @entangle('chosen_word') }">
@@ -110,17 +183,99 @@ new class extends Component {
                     show: false
                     }" @click="show = !show"
                     @reset-alpine-open.window="show = false">
-                    <span x-show="!show" class="text-white w-full min-w-24 text-center" x-text="kana"></span>
-                    <span x-show="show" class="text-white w-full min-w-24 text-center" x-cloak x-text="romaji"></span>
+                    <span x-show="!show" class="text-white w-full min-w-24 min-h-[10px] text-center" x-text="kana"></span>
+                    <span x-show="show" class="text-white w-full min-w-24 min-h-[10px] text-center" x-cloak x-text="romaji"></span>
                 </div>
             </template>
         </div>
 
-        <div class="flex gap-8">
+        <div class="grid grid-cols-2 gap-4 text-center w-full">
+            @foreach ($solutions as $index => $solution)
+            <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white"
+                @if (!$done && !in_array($index, $solutions_tried))
+                    wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = ''"
+                @endif
+                @if ($done && $solutions[$index] == $chosen_romaji) wire:click="next()" @endif
+                :class="
+                {
+                'bg-blue-700 active:bg-blue-600 hover:bg-blue-800/70': {{ !$done ? 'true' : 'false' }},
+                'cursor-pointer': {{ $solutions[$index] == $chosen_romaji || (!in_array($index, $solutions_tried) && !$done) ? 'true' : 'false' }},
+                'bg-zinc-600': {{ $done ? 'true' : 'false' }},
+                '!bg-green-700': {{ in_array($index, $solutions_tried) && $solutions[$index] == $chosen_romaji ? 'true' : 'false' }},
+                '!bg-red-600': {{ in_array($index, $solutions_tried) && $solutions[$index] != $chosen_romaji ? 'true' : 'false' }},
+                'hover:!bg-green-600': {{ $done && $solutions[$index] == $chosen_romaji ? 'true' : 'false' }},
+                }
+                "
+                wire:loading.attr="disabled"
+            >
+                <div class="w-full h-full flex items-center justify-center max-w-4xl max-h-16 relative group">
+                    <p class="fit-text">
+                        {{ $solution }}
+                    </p>
+                    @if ($done && $solutions[$index] == $chosen_romaji)
+                        <span class="hidden group-hover:block absolute right-4">Next...</span>
+                    @endif
+                </div>
+            </button>
+            @endforeach
+        </div>
+
+        <div class="flex w-full justify-between">
+            <div class="flex">Correct: {{ $correct }} / {{ $count }} ({{ round($correct / $count * 100) }}%)</div>
+            <div class="flex">Wrong: {{ $wrong }} / {{ $count }} ({{ round($wrong / $count * 100) }}%)</div>
+        </div>
+
+        <div class="flex w-full p-0 message"></div>
+
+        <div class="grid grid-cols-2 gap-8 w-full flex-wrap justify-center">
+            <button wire:click="resetCount" class="active:bg-red-600 bg-red-800 text-white rounded-xl p-4 text-3xl">Reset</button>
+            <button wire:click="next" class="active:bg-blue-600 bg-blue-800 text-white rounded-xl p-4 text-3xl">{{ $done ? 'Next' : 'Skip' }}</button>
             <button class="active:bg-green-600 bg-yellow-800 text-white rounded-xl p-4 text-3xl" @click="playAudio('{{ $this->chosen_word_kana }}', 0.1)">Play Slow</button>
             <button class="active:bg-green-600 bg-green-800 text-white rounded-xl p-4 text-3xl" @click="playAudio('{{ $this->chosen_word_kana }}')">Play</button>
-            <button wire:click="next" class="active:bg-blue-600 bg-blue-800 text-white rounded-xl p-4 text-3xl">Next</button>
         </div>
     </div>
 
 </div>
+
+<script>
+function fitText(el, minSize = 12, maxSize = 200) {
+  const parent = el.parentElement;
+  let low = minSize;
+  let high = maxSize;
+  let size = minSize;
+
+  el.style.whiteSpace = "normal"; // allow wrapping
+
+  while (low <= high) {
+    let mid = Math.floor((low + high) / 2);
+    el.style.fontSize = mid + "px";
+
+    if (el.scrollWidth <= parent.clientWidth && el.scrollHeight <= parent.clientHeight) {
+      size = mid;  // fits, try bigger
+      low = mid + 1;
+    } else {
+      high = mid - 1; // too big, try smaller
+    }
+  }
+
+  el.style.fontSize = size + "px";
+}
+
+function fitAll() {
+  document.querySelectorAll(".fit-text").forEach(el => fitText(el));
+}
+
+window.addEventListener("load", function() {
+    fitAll();
+    Livewire.hook('morphed', ({ el, component }) => {
+        fitAll();
+    })
+});
+
+window.addEventListener("resize", () => {
+  clearTimeout(window._fitTimer);
+  window._fitTimer = setTimeout(fitAll, 100); // debounce
+});
+
+
+</script>
