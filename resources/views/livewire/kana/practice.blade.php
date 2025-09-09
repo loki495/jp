@@ -23,6 +23,8 @@ new class extends Component {
 
     public $message = '';
 
+    public $last_word = '';
+
     #[Session]
     public $count = 0;
 
@@ -34,6 +36,9 @@ new class extends Component {
 
     #[Session]
     public $done = 0;
+
+    #[Session]
+    public $next_on_correct = false;
 
     public $solutions = [];
 
@@ -75,7 +80,10 @@ new class extends Component {
 
         $selected = $selected->flatMap(fn($group) => $group);
 
-        $this->chosen_word = Collection::times($current_length, fn() => $selected->random());
+        $this->last_word = $this->chosen_word;
+        while ($this->last_word == $this->chosen_word) {
+            $this->chosen_word = Collection::times($current_length, fn() => $selected->random());
+        }
         $this->chosen_kana = $this->chosen_word->map(fn($kana) => $kana['kana'])->implode('');
         $this->chosen_romaji = $this->chosen_word->map(fn($kana) => $kana['romaji'])->implode('');
 
@@ -102,12 +110,6 @@ new class extends Component {
         $this->generateWord();
         $this->dispatch('reset-alpine-open');
         $this->message = '';
-        $this->count++;
-    }
-
-    #[Computed]
-    public function chosen_word_kana() {
-        return $this->chosen_word->map(fn($kana) => $kana['kana'])->implode('');
     }
 
     public function resetCount() {
@@ -118,11 +120,13 @@ new class extends Component {
     }
 
     public function check($solution_index) {
+        $this->count++;
         $solution = $this->solutions[$solution_index];
         if ($solution == $this->chosen_romaji) {
             $this->correct++;
             $this->done = true;
             $this->message = 'Correct!';
+            $this->dispatch('next');
         } else {
             $this->wrong++;
             $this->message = 'Wrong!';
@@ -139,9 +143,9 @@ new class extends Component {
     <h1 class="text-3xl font-bold text-center mb-2 text-white">Kana Practice</h1>
 
     <div class="flex flex-col md:flex-row md:justify-between">
-        <div class="mb-4 flex flex-col">
+        <div class="mb-4 flex gap-4">
             <div>Practicing Groups:</div>
-           <div>{{ empty($selected_groups) ? 'All' : strtoupper(implode(', ', $selected_groups)) }} ({{ count($chosen_word) }} chars / {{ $length }} max)</div>
+           <div>{{ empty($selected_groups) ? 'All' : strtoupper(implode(', ', $selected_groups)) }} ({{ mb_strlen($chosen_kana) }} chars / {{ $length }} max)</div>
         </div>
 
         <details class="mb-4 group border border-zinc-600 p-2 rounded-xl bg-zinc-700">
@@ -161,12 +165,15 @@ new class extends Component {
                     </flux:checkbox.group>
                 </div>
 
-                <div class="flex gap-4 py-4 items-centea">
+                <div class="flex gap-4 py-4 items-center">
                     <label class="text-white font-semibold flex items-center gap-4">
                         <span>Max Length:</span>
                         <input wire:model.live.change="length" type="range" min="1" max="{{ $max_length }}" class="bg-zinc-800 text-white rounded" />
                         <span class="ml-2">{{ $length }} / {{ $max_length }}</span>
                     </label>
+                </div>
+                <div class="flex gap-4 py-4 items-center">
+                    <flux:checkbox label="Next on Correct" wire:model="next_on_correct" />
                 </div>
             </flux:fieldset>
 
@@ -221,8 +228,8 @@ new class extends Component {
         </div>
 
         <div class="flex w-full justify-between">
-            <div class="flex">Correct: {{ $correct }} / {{ $count }} ({{ round($correct / $count * 100) }}%)</div>
-            <div class="flex">Wrong: {{ $wrong }} / {{ $count }} ({{ round($wrong / $count * 100) }}%)</div>
+            <div class="flex">Correct: {{ $correct }} / {{ $count }} ({{ round($correct / max(1,$count) * 100) }}%)</div>
+            <div class="flex">Wrong: {{ $wrong }} / {{ $count }} ({{ round($wrong / max(1,$count) * 100) }}%)</div>
         </div>
 
         <div class="flex w-full p-0 message"></div>
@@ -230,8 +237,8 @@ new class extends Component {
         <div class="grid grid-cols-2 gap-8 w-full flex-wrap justify-center">
             <button wire:click="resetCount" class="active:bg-red-600 bg-red-800 text-white rounded-xl p-4 text-3xl">Reset</button>
             <button wire:click="next" class="active:bg-blue-600 bg-blue-800 text-white rounded-xl p-4 text-3xl">{{ $done ? 'Next' : 'Skip' }}</button>
-            <button class="active:bg-green-600 bg-yellow-800 text-white rounded-xl p-4 text-3xl" @click="playAudio('{{ $this->chosen_word_kana }}', 0.1)">Play Slow</button>
-            <button class="active:bg-green-600 bg-green-800 text-white rounded-xl p-4 text-3xl" @click="playAudio('{{ $this->chosen_word_kana }}')">Play</button>
+            <button class="active:bg-green-600 bg-yellow-800 text-white rounded-xl p-4 text-3xl" @click="playAudio('{{ $chosen_kana }}', 0.1)">Play Slow</button>
+            <button class="active:bg-green-600 bg-green-800 text-white rounded-xl p-4 text-3xl" @click="playAudio('{{ $chosen_kana }}')">Play</button>
         </div>
     </div>
 
@@ -269,13 +276,13 @@ window.addEventListener("load", function() {
     fitAll();
     Livewire.hook('morphed', ({ el, component }) => {
         fitAll();
-    })
+        if (component.canonical.next_on_correct && component.canonical.done) setTimeout(component.$wire.next,100);
+    });
 });
 
 window.addEventListener("resize", () => {
   clearTimeout(window._fitTimer);
   window._fitTimer = setTimeout(fitAll, 100); // debounce
 });
-
 
 </script>
