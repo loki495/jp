@@ -108,7 +108,7 @@ new class extends Component {
 
     public function next() {
         $this->generateWord();
-        $this->dispatch('reset-alpine-open');
+        $this->dispatch('clear-solutions');
         $this->message = '';
     }
 
@@ -136,7 +136,7 @@ new class extends Component {
 }
 
 ?>
-<div class="max-w-6xl mx-auto px-4 py-0 dark" >
+<div class="max-w-6xl mx-auto px-4 py-0 dark" x-data="{ show_solutions: false }" @hide-solutions.window="show_solutions = false">
 
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
 
@@ -187,20 +187,24 @@ new class extends Component {
                x-data="{
                     kana: char.kana,
                     romaji: char.romaji,
-                    show: false
-                    }" @click="show = !show"
-                    @reset-alpine-open.window="show = false">
-                    <span x-show="!show" class="text-white w-full min-w-24 min-h-[10px] text-center" x-text="kana"></span>
-                    <span x-show="show" class="text-white w-full min-w-24 min-h-[10px] text-center" x-cloak x-text="romaji"></span>
+                    show_romaji: false
+                    }"
+                    @click="show_romaji = !show_romaji"
+                    @clear-solutions.window="show_romaji = false">
+                    <span x-show="!show_romaji" class="text-white w-full min-w-24 min-h-[10px] text-center" x-text="kana"></span>
+                    <span x-show="show_romaji" class="text-white w-full min-w-24 min-h-[10px] text-center" x-cloak x-text="romaji"></span>
                 </div>
             </template>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 text-center w-full">
+        <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer" @click="show_solutions = !show_solutions; if (show_solutions) setTimeout(() => fitAll(), 10)">Toggle Solutions</button>
+
+        <div class="grid grid-cols-2 gap-4 text-center w-full" x-show="show_solutions" x-cloak>
             @foreach ($solutions as $index => $solution)
             <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white"
+                wire:key="{{ $count . '-' . $index }}-{{ $solution }}"
                 @if (!$done && !in_array($index, $solutions_tried))
-                    wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = ''"
+                    wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = '';"
                 @endif
                 @if ($done && $solutions[$index] == $chosen_romaji) wire:click="next()" @endif
                 :class="
@@ -214,9 +218,11 @@ new class extends Component {
                 }
                 "
                 wire:loading.attr="disabled"
+                wire:loading.class="opacity-50"
+                wire:target.except="null"
             >
-                <div class="w-full h-full flex items-center justify-center max-w-4xl max-h-16 relative group">
-                    <p class="fit-text">
+                <div class="w-full h-full flex items-center justify-center max-w-4xl max-h-16 min-h-16 relative group">
+                    <p class="fit-text opacity-0">
                         {{ $solution }}
                     </p>
                     @if ($done && $solutions[$index] == $chosen_romaji)
@@ -246,43 +252,53 @@ new class extends Component {
 
 <script>
 function fitText(el, minSize = 12, maxSize = 200) {
-  const parent = el.parentElement;
-  let low = minSize;
-  let high = maxSize;
-  let size = minSize;
+    if (!el.scrollWidth) return;
+    const parent = el.parentElement;
+    let low = minSize;
+    let high = maxSize;
+    let size = minSize;
 
-  el.style.whiteSpace = "normal"; // allow wrapping
+    el.style.whiteSpace = "normal"; // allow wrapping
 
-  while (low <= high) {
-    let mid = Math.floor((low + high) / 2);
-    el.style.fontSize = mid + "px";
+    while (low <= high) {
+        let mid = Math.floor((low + high) / 2);
+        el.style.fontSize = mid + "px";
 
-    if (el.scrollWidth <= parent.clientWidth && el.scrollHeight <= parent.clientHeight) {
-      size = mid;  // fits, try bigger
-      low = mid + 1;
-    } else {
-      high = mid - 1; // too big, try smaller
+        if (el.scrollWidth <= parent.clientWidth && el.scrollHeight <= parent.clientHeight) {
+            size = mid;  // fits, try bigger
+            low = mid + 1;
+        } else {
+            high = mid - 1; // too big, try smaller
+        }
     }
-  }
 
-  el.style.fontSize = size + "px";
+    el.style.fontSize = size + "px";
+    console.log('showing ' + el.innerText);
+    el.style.opacity = 1;
 }
 
 function fitAll() {
-  document.querySelectorAll(".fit-text").forEach(el => fitText(el));
+    document.querySelectorAll(".fit-text").forEach(el => fitText(el));
 }
 
 window.addEventListener("load", function() {
     fitAll();
     Livewire.hook('morphed', ({ el, component }) => {
-        fitAll();
-        if (component.canonical.next_on_correct && component.canonical.done) setTimeout(component.$wire.next,100);
+        if (component.canonical.next_on_correct && component.canonical.done) {
+            setTimeout(() => {
+                Livewire.dispatch('hide-solutions')
+                component.$wire.next();
+            },100);
+        }
+        requestAnimationFrame(() => {
+            fitAll();
+        });
     });
 });
 
 window.addEventListener("resize", () => {
-  clearTimeout(window._fitTimer);
-  window._fitTimer = setTimeout(fitAll, 100); // debounce
+    clearTimeout(window._fitTimer);
+    window._fitTimer = setTimeout(fitAll, 100); // debounce
 });
 
 </script>
