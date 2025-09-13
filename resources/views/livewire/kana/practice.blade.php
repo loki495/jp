@@ -19,6 +19,11 @@ new class extends Component {
         's' => [11,12,13,14,15],
         't' => [16,17,18,19,20],
         'n' => [21,22,23,24,25],
+        '' => [],
+        'g' => [47,48,49,50,51],
+        'z' => [52,53,54,55,56],
+        'd' => [57,58,59,60,61],
+        '' => [],
     ];
 
     public $message = '';
@@ -156,11 +161,16 @@ new class extends Component {
 
             <flux:fieldset>
                 <div class="flex gap-6 *:gap-x-2 mt-4">
-                    <flux:checkbox.group wire:model.live="selected_groups" class="flex [&>[data-flux-field]:last-child]:mb-4!">
-                        @foreach (array_keys($kana_grouping) as $group)
-                            <div class="border border-zinc-600 p-2 rounded-xl bg-zinc-700">
-                                <flux:checkbox label="{{ strtoupper($group) }}" value="{{ $group }}" />
+                    <flux:checkbox.group wire:model.live="selected_groups" class="grid grid-cols-5">
+                        @foreach ($kana_grouping as $key => $group)
+                            @if (empty($group))
+                            <div class="">
                             </div>
+                            @else
+                            <div class="border border-zinc-600 p-2 rounded-xl bg-zinc-700">
+                                <flux:checkbox label="{{ strtoupper($key) }}" value="{{ $key }}" />
+                            </div>
+                            @endif
                         @endforeach
                     </flux:checkbox.group>
                 </div>
