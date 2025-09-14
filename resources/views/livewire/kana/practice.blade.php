@@ -145,7 +145,7 @@ new class extends Component {
 
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
 
-    <h1 class="text-3xl font-bold text-center mb-2 text-white">Kana Practice</h1>
+    <h1 class="text-3xl font-bold text-center mb-2 text-white -mt-10">Kana Practice</h1>
 
     <div class="flex flex-col md:flex-row md:justify-between">
         <div class="mb-4 flex gap-4">
@@ -190,7 +190,7 @@ new class extends Component {
         </details>
     </div>
 
-    <div class="flex flex-col gap-4 justify-center items-center">
+    <div class="flex flex-col gap-4 justify-center items-center relative">
         <div class="flex gap-2 flex-wrap justify-center" x-data="{ chosen_word: @entangle('chosen_word') }">
             <template x-for="char, index in chosen_word" :key="'kana-word-' + char.id + '-' + index">
             <div class="kana group flex items-center gap-4 mb-4 p-2 rounded-xl justify-center border-b border-zinc-500 text-6xl"
@@ -215,9 +215,9 @@ new class extends Component {
             @pointercancel="cancelHold"
         >Toggle Solutions</button>
 
-        <div class="grid grid-cols-2 gap-4 text-center w-full" x-show="show_solutions" x-cloak>
+        <div class="grid grid-cols-1 gap-4 text-center w-full absolute bg-zinc-700 p-4 rounded-xl top-44" x-show="show_solutions" x-transition.duration.100ms x-cloak>
             @foreach ($solutions as $index => $solution)
-            <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white"
+            <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white select-none"
                 wire:key="{{ $count . '-' . $index }}-{{ $solution }}"
                 @if (!$done && !in_array($index, $solutions_tried))
                     wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = '';"
@@ -330,7 +330,7 @@ function hoverMenu() {
         // start tracking finger movement
         this.boundTrack = this.trackMove.bind(this);
         document.addEventListener('pointermove', this.boundTrack);
-      }, 400);
+      }, 20);
     },
 
     trackMove(e) {
