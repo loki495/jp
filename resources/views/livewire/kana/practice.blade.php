@@ -141,7 +141,7 @@ new class extends Component {
 }
 
 ?>
-<div class="max-w-6xl mx-auto px-4 py-0 dark" x-data="hoverMenu()" @hide-solutions.window="show_solutions = false">
+<div class="max-w-6xl mx-auto px-4 py-0 select-none dark" x-data="hoverMenu()" @hide-solutions.window="show_solutions = false">
 
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
 
@@ -207,7 +207,7 @@ new class extends Component {
             </template>
         </div>
 
-        <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer select-none touch-none hover:ring-2 active:ring-2"
+        <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer touch-none hover:ring-2 active:ring-2"
             @click="show_solutions = !show_solutions; if (show_solutions) setTimeout(() => fitAll(), 10)"
             @mouseenter="show_solutions = true; setTimeout(() => fitAll(), 10)"
             @pointerdown="startHold($event)"
@@ -215,9 +215,9 @@ new class extends Component {
             @pointercancel="cancelHold"
         >Toggle Solutions</button>
 
-        <div class="grid grid-cols-1 gap-4 text-center w-full absolute bg-zinc-700 p-4 rounded-xl top-44" x-show="show_solutions" x-transition.duration.100ms x-cloak>
+        <div class="buttons-wrapper grid grid-cols-1 gap-4 text-center w-full absolute bg-zinc-700 p-4 rounded-xl top-44" x-show="show_solutions" x-transition.duration.100ms @click.outside="show_solutions = false" x-cloak>
             @foreach ($solutions as $index => $solution)
-            <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white select-none"
+            <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white"
                 wire:key="{{ $count . '-' . $index }}-{{ $solution }}"
                 @if (!$done && !in_array($index, $solutions_tried))
                     wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = '';"
@@ -379,6 +379,12 @@ function hoverMenu() {
         if (this.activeEl) {
             this.activeEl.classList.remove('ring', 'ring-offset-2');
             this.activeEl = null;
+        }
+
+        // hide the menu if release is outside the wrapper (#2)
+        let menuEl = document.querySelector('.buttons-wrapper');
+        if (!menuEl.contains(el)) {
+            this.show_solutions = false;
         }
     },
 
