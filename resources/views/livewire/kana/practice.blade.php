@@ -141,7 +141,7 @@ new class extends Component {
 }
 
 ?>
-<div class="max-w-6xl mx-auto px-4 py-0 dark" x-data="{ show_solutions: false }" @hide-solutions.window="show_solutions = false">
+<div class="max-w-6xl mx-auto px-4 py-0 dark" x-data="hoverMenu()" @hide-solutions.window="show_solutions = false">
 
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
 
@@ -207,7 +207,13 @@ new class extends Component {
             </template>
         </div>
 
-        <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer" @click="show_solutions = !show_solutions; if (show_solutions) setTimeout(() => fitAll(), 10)">Toggle Solutions</button>
+        <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer select-none touch-none hover:ring-2 active:ring-2"
+            @click="show_solutions = !show_solutions; if (show_solutions) setTimeout(() => fitAll(), 10)"
+            @mouseenter="show_solutions = true; setTimeout(() => fitAll(), 10)"
+            @pointerdown="startHold($event)"
+            @pointerup="endHold($event)"
+            @pointercancel="cancelHold"
+        >Toggle Solutions</button>
 
         <div class="grid grid-cols-2 gap-4 text-center w-full" x-show="show_solutions" x-cloak>
             @foreach ($solutions as $index => $solution)
@@ -283,7 +289,6 @@ function fitText(el, minSize = 12, maxSize = 200) {
     }
 
     el.style.fontSize = size + "px";
-    console.log('showing ' + el.innerText);
     el.style.opacity = 1;
 }
 
@@ -311,4 +316,80 @@ window.addEventListener("resize", () => {
     window._fitTimer = setTimeout(fitAll, 100); // debounce
 });
 
+function hoverMenu() {
+  return {
+    show_solutions: false,
+    holdTimer: null,
+    activeEl: null,
+
+    startHold(e) {
+      this.holdTimer = setTimeout(() => {
+        this.show_solutions = true;
+        setTimeout(() => fitAll(), 10);
+
+        // start tracking finger movement
+        this.boundTrack = this.trackMove.bind(this);
+        document.addEventListener('pointermove', this.boundTrack);
+      }, 400);
+    },
+
+    trackMove(e) {
+        // get element under finger
+        let el = document.elementFromPoint(e.clientX, e.clientY);
+
+        // walk up the tree until we find a BUTTON or stop at wrapper
+        while (el && el.tagName !== 'BUTTON' && el.id !== 'wrapper') {
+            el = el.parentElement;
+        }
+
+        // remove previous highlight if it changed
+        if (this.activeEl && this.activeEl !== el) {
+            this.activeEl.classList.remove('ring', 'ring-offset-2');
+            this.activeEl = null;
+        }
+
+        // highlight new button
+        if (el && el.tagName === 'BUTTON') {
+            el.classList.add('ring', 'ring-offset-2');
+            this.activeEl = el;
+        }
+    },
+
+    endHold(e) {
+        clearTimeout(this.holdTimer);
+
+        if (this.boundTrack) {
+            document.removeEventListener('pointermove', this.boundTrack);
+        }
+
+        // get element under finger
+        let el = document.elementFromPoint(e.clientX, e.clientY);
+
+        // walk up the tree until we find a BUTTON or stop at wrapper
+        while (el && el.tagName !== 'BUTTON' && el.id !== 'wrapper') {
+            el = el.parentElement;
+        }
+
+        // if finger is released on a button, trigger click
+        if (el && el.tagName === 'BUTTON') {
+            el.click();
+        }
+
+        // cleanup highlight
+        if (this.activeEl) {
+            this.activeEl.classList.remove('ring', 'ring-offset-2');
+            this.activeEl = null;
+        }
+    },
+
+    cancelHold() {
+      clearTimeout(this.holdTimer);
+      document.removeEventListener('pointermove', this.boundTrack);
+      if (this.activeEl) {
+        this.activeEl.classList.remove('ring', 'ring-offset-2');
+        this.activeEl = null;
+      }
+    }
+  }
+}
 </script>
