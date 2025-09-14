@@ -43,7 +43,7 @@ new class extends Component {
     public $done = 0;
 
     #[Session]
-    public $next_on_correct = false;
+    public $next_on_correct;
 
     public $solutions = [];
 
@@ -183,7 +183,7 @@ new class extends Component {
                     </label>
                 </div>
                 <div class="flex gap-4 py-4 items-center">
-                    <flux:checkbox label="Next on Correct" wire:model="next_on_correct" />
+                    <flux:checkbox label="Next on Correct" wire:model.live="next_on_correct" />
                 </div>
             </flux:fieldset>
 
