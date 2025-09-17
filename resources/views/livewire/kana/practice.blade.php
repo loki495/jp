@@ -207,46 +207,54 @@ new class extends Component {
             </template>
         </div>
 
-        <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer touch-none hover:ring-2 active:ring-2"
-            @click="show_solutions = !show_solutions; if (show_solutions) setTimeout(() => fitAll(), 10)"
-            @mouseenter="show_solutions = true; setTimeout(() => fitAll(), 10)"
-            @pointerdown="startHold($event)"
-            @pointerup="endHold($event)"
-            @pointercancel="cancelHold"
-        >Toggle Solutions</button>
-
-        <div class="buttons-wrapper grid grid-cols-1 gap-4 text-center w-full absolute bg-zinc-700 p-4 rounded-xl top-44" x-show="show_solutions" x-transition.duration.100ms @click.outside="show_solutions = false" x-cloak>
-            @foreach ($solutions as $index => $solution)
-            <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white"
-                wire:key="{{ $count . '-' . $index }}-{{ $solution }}"
-                @if (!$done && !in_array($index, $solutions_tried))
-                    wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = '';"
-                @endif
-                @if ($done && $solutions[$index] == $chosen_romaji) wire:click="next()" @endif
-                :class="
-                {
-                'bg-blue-700 active:bg-blue-600 hover:bg-blue-800/70': {{ !$done ? 'true' : 'false' }},
-                'cursor-pointer': {{ $solutions[$index] == $chosen_romaji || (!in_array($index, $solutions_tried) && !$done) ? 'true' : 'false' }},
-                'bg-zinc-600': {{ $done ? 'true' : 'false' }},
-                '!bg-green-700': {{ in_array($index, $solutions_tried) && $solutions[$index] == $chosen_romaji ? 'true' : 'false' }},
-                '!bg-red-600': {{ in_array($index, $solutions_tried) && $solutions[$index] != $chosen_romaji ? 'true' : 'false' }},
-                'hover:!bg-green-600': {{ $done && $solutions[$index] == $chosen_romaji ? 'true' : 'false' }},
-                }
-                "
-                wire:loading.attr="disabled"
-                wire:loading.class="opacity-50"
-                wire:target.except="null"
+        <div class="toggle-and-solutions-wrapper relative"
+            @mouseleave="show_solutions = false"
+            @click.outside="show_solutions = false"
             >
-                <div class="w-full h-full flex items-center justify-center max-w-4xl max-h-16 min-h-16 relative group">
-                    <p class="fit-text opacity-0">
-                        {{ $solution }}
-                    </p>
-                    @if ($done && $solutions[$index] == $chosen_romaji)
-                        <span class="hidden group-hover:block absolute right-4">Next...</span>
+            <button class="w-full border border-zinc-600 p-4 text-2xl rounded-xl text-white hover:bg-blue-800 cursor-pointer touch-none hover:ring-2 active:ring-2"
+                @click="show_solutions = !show_solutions; if (show_solutions) setTimeout(() => fitAll(), 10)"
+                @mouseenter="show_solutions = true; setTimeout(() => fitAll(), 10)"
+                @pointerdown="startHold($event)"
+                @pointerup="endHold($event)"
+                @pointercancel="cancelHold"
+            >Toggle Solutions</button>
+
+            <div class="buttons-wrapper max-w-4xl grid grid-cols-1 gap-4 text-center w-full absolute bg-zinc-700 p-4 rounded-xl"
+                x-show="show_solutions"
+                x-transition.duration.100ms
+                x-cloak>
+                @foreach ($solutions as $index => $solution)
+                <button class="{{ $solution }} w-full border border-zinc-600 px-4 rounded-xl text-white max-h-16 min-h-16"
+                    wire:key="{{ $count . '-' . $index }}-{{ $solution }}"
+                    @if (!$done && !in_array($index, $solutions_tried))
+                        wire:click="check('{{ $index}}')" @click="document.querySelector('.message').innerHtml = '';"
                     @endif
-                </div>
-            </button>
-            @endforeach
+                    @if ($done && $solutions[$index] == $chosen_romaji) wire:click="next()" @endif
+                    :class="
+                    {
+                    'bg-blue-700 active:bg-blue-600 hover:bg-blue-800/70': {{ !$done ? 'true' : 'false' }},
+                    'cursor-pointer': {{ $solutions[$index] == $chosen_romaji || (!in_array($index, $solutions_tried) && !$done) ? 'true' : 'false' }},
+                    'bg-zinc-600': {{ $done ? 'true' : 'false' }},
+                    '!bg-green-700': {{ in_array($index, $solutions_tried) && $solutions[$index] == $chosen_romaji ? 'true' : 'false' }},
+                    '!bg-red-600': {{ in_array($index, $solutions_tried) && $solutions[$index] != $chosen_romaji ? 'true' : 'false' }},
+                    'hover:!bg-green-600': {{ $done && $solutions[$index] == $chosen_romaji ? 'true' : 'false' }},
+                    }
+                    "
+                    wire:loading.attr="disabled"
+                    wire:loading.class="opacity-50"
+                    wire:target.except="null"
+                >
+                    <div class="w-full h-full flex items-center justify-center relative group">
+                        <p class="fit-text opacity-0">
+                            {{ $solution }}
+                        </p>
+                        @if ($done && $solutions[$index] == $chosen_romaji && !$next_on_correct)
+                            <span class="hidden group-hover:block absolute right-4">Next...</span>
+                        @endif
+                    </div>
+                </button>
+                @endforeach
+            </div>
         </div>
 
         <div class="flex w-full justify-between">
