@@ -43,7 +43,7 @@ new class extends Component {
     public $done = 0;
 
     #[Session]
-    public $next_on_correct;
+    public $next_on_correct = 1;
 
     public $solutions = [];
 
