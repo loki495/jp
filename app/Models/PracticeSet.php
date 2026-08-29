@@ -7,15 +7,16 @@ namespace App\Models;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-//use Illuminate\Database\Eloquent\Model;
+// use Illuminate\Database\Eloquent\Model;
 
 class PracticeSet
 {
-
     public $filename = '';
+
     public static $path = 'practice_sets/';
 
     const LEARNED_SET = 'learned';
+
     const HIRAGANA_SET = 'hiragana';
 
     public function __construct(
@@ -27,9 +28,9 @@ class PracticeSet
             $this->name != static::HIRAGANA_SET
         ) {
             $slug = Str::slug($this->name);
-            $this->filename = Storage::path(static::$path) . "{$slug}.json";
+            $this->filename = Storage::path(static::$path)."{$slug}.json";
 
-            if (!file_exists($this->filename)) {
+            if (! file_exists($this->filename)) {
                 @mkdir(dirname($this->filename), 0777, true);
                 file_put_contents($this->filename, json_encode([]));
             }
@@ -53,7 +54,7 @@ class PracticeSet
         return $sets;
     }
 
-    public function words(string $search = '') : array
+    public function words(string $search = ''): array
     {
         if ($this->name === static::LEARNED_SET) {
             $data = Word::query()
@@ -85,6 +86,7 @@ class PracticeSet
             if ($search) {
                 $data = $data->filter(function ($id) use ($search) {
                     $word = Word::findOrFail($id);
+
                     return
                         strpos($word->romaji, $search) !== false ||
                         strpos($word->kana, $search) !== false ||
@@ -101,7 +103,7 @@ class PracticeSet
         $word = Word::findOrFail($id);
 
         if ($this->name === 'learned') {
-            $word->learned = !$word->learned;
+            $word->learned = ! $word->learned;
             $word->save();
 
             return;
@@ -118,5 +120,4 @@ class PracticeSet
 
         file_put_contents($this->filename, json_encode($data, JSON_PRETTY_PRINT));
     }
-
 }

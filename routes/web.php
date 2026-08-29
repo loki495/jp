@@ -64,13 +64,13 @@ Route::get('/convert-kanji-csv', function () {
         $kunyomi_romaji = $row[6];
         $meanings = collect(json_decode($row[9]))
             ->map(function ($meaning) {
-                return $meaning[0] . '(' . $meaning[1] . ')';
+                return $meaning[0].'('.$meaning[1].')';
             })->implode(', ');
 
         $data = [
             $kanji,
-            $onyomi . ' (' . $onyomi_romaji . ')',
-            $kunyomi . ' (' . $kunyomi_romaji . ')',
+            $onyomi.' ('.$onyomi_romaji.')',
+            $kunyomi.' ('.$kunyomi_romaji.')',
             $meanings,
         ];
         fputcsv($out, $data);

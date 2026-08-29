@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kana extends Model
 {
-    function guessRomajiForKanjiInWord($word) {
+    public function guessRomajiForKanjiInWord($word)
+    {
         $kanjiPos = mb_strpos($word['kana'], $this->kana);
-        if ($kanjiPos === false) return null;
+        if ($kanjiPos === false) {
+            return null;
+        }
 
         // All kana-romaji pairs
         $kunyomi = self::parseReadings($this->kunyomi);
@@ -20,10 +23,12 @@ class Kana extends Model
         $candidates = $hasOkurigana ? $kunyomi : $onyomi;
 
         // Sort readings by kana length ascending → prioritize more isolated (e.g., 'ちい' over 'ちいさい')
-        uksort($candidates, fn($a, $b) => mb_strlen($a) <=> mb_strlen($b));
+        uksort($candidates, fn ($a, $b) => mb_strlen($a) <=> mb_strlen($b));
 
         foreach ($candidates as $kana => $romaji) {
-            if (!$romaji) continue;
+            if (! $romaji) {
+                continue;
+            }
             if (str_starts_with($word['romaji'], $romaji)) {
                 // Map kana to this kanji only: trim off okurigana
                 // We assume the kana part related to the kanji matches the same number of kana as the matched kana
@@ -47,12 +52,14 @@ class Kana extends Model
 
         // fallback to first single-kanji kunyomi or onyomi
         foreach (array_merge($kunyomi, $onyomi) as $kana => $romaji) {
-            if (mb_strlen($kana) <= 2 && $romaji) return $romaji;
+            if (mb_strlen($kana) <= 2 && $romaji) {
+                return $romaji;
+            }
         }
     }
 
-
-    private static function parseReadings($readingStr) {
+    private static function parseReadings($readingStr)
+    {
         [$kanaStr, $romajiStr] = explode('(', $readingStr);
         $kanaList = array_map('trim', explode('、', trim($kanaStr)));
         $romajiList = array_map('trim', explode(',', rtrim($romajiStr, ')')));
@@ -64,5 +71,4 @@ class Kana extends Model
 
         return $map;
     }
-
 }

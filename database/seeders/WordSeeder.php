@@ -2152,7 +2152,7 @@ class WordSeeder extends Seeder
             ['id' => '2140', 'romaji' => 'naku', 'kana' => '鳴き', 'meaning' => 'to make animal sound', 'learned' => false],
             ['id' => '2141', 'romaji' => 'toriniku', 'kana' => '鶏肉', 'meaning' => 'chicken meat', 'learned' => false],
             ['id' => '2142', 'romaji' => 'hana', 'kana' => '鼻', 'meaning' => 'nose, noses', 'learned' => false],
-            ['id' => '2143', 'romaji' => 'niwatori', 'kana' => '鶏', 'meaning' => 'chicken', 'learned' => false]
+            ['id' => '2143', 'romaji' => 'niwatori', 'kana' => '鶏', 'meaning' => 'chicken', 'learned' => false],
         ]);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Kana;
+use Illuminate\Database\Seeder;
 
 class KanjiSeeder extends Seeder
 {
@@ -11,8 +11,9 @@ class KanjiSeeder extends Seeder
     {
         $path = storage_path('app/kanji_full_with_romaji.csv');
 
-        if (!file_exists($path)) {
-            $this->command->error('CSV file not found at: ' . $path);
+        if (! file_exists($path)) {
+            $this->command->error('CSV file not found at: '.$path);
+
             return;
         }
 
@@ -22,7 +23,7 @@ class KanjiSeeder extends Seeder
             while (($data = fgetcsv($handle)) !== false) {
                 $row = array_combine($headers, $data);
 
-                if (!$row || empty($row['kanji'])) {
+                if (! $row || empty($row['kanji'])) {
                     continue;
                 }
 
@@ -36,7 +37,7 @@ class KanjiSeeder extends Seeder
                         'meaning' => $row['meanings'] ?? '',
                         'onyomi' => $row['onyomi'] ?? '',
                         'kunyomi' => $row['kunyomi'] ?? '',
-                        'romaji'  => $row['romaji'] ?? '',
+                        'romaji' => $row['romaji'] ?? '',
                         'learned' => false,
                     ]
                 );
@@ -45,7 +46,7 @@ class KanjiSeeder extends Seeder
             fclose($handle);
             $this->command->info('Kanji seeding complete.');
         } else {
-            $this->command->error('Unable to open the file: ' . $path);
+            $this->command->error('Unable to open the file: '.$path);
         }
     }
 }
