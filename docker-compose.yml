@@ -11,8 +11,6 @@ services:
       - ./:/var/www/html
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.jp.rule=Host(`jp.dev.local.test`)"
-      - "traefik.http.routers.jp.entrypoints=web"
       - "traefik.http.services.jp.loadbalancer.server.port=80"
     networks:
       - web
