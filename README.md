@@ -30,3 +30,8 @@ Duolingo added an "energy" system i would run out of pretty fast, so I made this
 
 ## Notes
 This is an actively developed project. Some features and flows are incomplete or may change.
+
+## Remote access
+Also reachable at `https://jp.ac495.net` via a Cloudflare Tunnel, behind Cloudflare
+Access. Remote traffic gets built Vite assets (`public/build`) instead of the LAN dev
+server, so run `npm run build` after any frontend change for it to show up remotely.

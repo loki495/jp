@@ -123,4 +123,19 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Static Asset Hosts
+    |--------------------------------------------------------------------------
+    |
+    | Hostnames that should always receive built Vite assets (public/build)
+    | instead of the LAN-only Vite dev server, e.g. remote tunnel hostnames.
+    |
+    */
+
+    'static_asset_hosts' => array_values(array_filter(array_map(
+        trim(...),
+        explode(',', (string) env('STATIC_ASSET_HOSTS', '')),
+    ))),
+
 ];
