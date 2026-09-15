@@ -25,7 +25,7 @@ services:
       - ./:/var/www/html
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.jp-vite.rule=Host(`vite.jp.dev.local.test`)"
+      - "traefik.http.routers.jp-vite.rule=Host(`vite.jp.ac495.net`)"
       - "traefik.http.routers.jp-vite.entrypoints=web"
       - "traefik.http.services.jp-vite.loadbalancer.server.port=5173"
     networks:

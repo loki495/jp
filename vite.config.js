@@ -19,7 +19,7 @@ export default defineConfig({
             clientPort: env.VITE_HMR_PORT ? parseInt(env.VITE_HMR_PORT) : 5173,
         },
         cors: true,
-        allowedHosts: ['vite.jp.dev.local.test', '192.168.1.12', '0.0.0.0'],
+        allowedHosts: ['vite.jp.ac495.net', '192.168.1.12', '0.0.0.0'],
     },
     plugins: [
         laravel({
