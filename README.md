@@ -19,6 +19,25 @@ This app helps track learned vocabulary and characters while reinforcing memory 
 - Simple interactive learning flow
 - Structured data model for vocabulary progression
 
+## Importing words from Duolingo
+`storage/app/extract.js` pulls `[kana, meaning]` pairs from the Duolingo words page. Import the
+resulting JSON with:
+
+```
+docker exec jp-app php artisan words:import storage/app/words_YYYY-MM-DD.json \
+    --romaji=storage/app/words_YYYY-MM-DD.romaji.json --dry-run
+```
+
+Words already in the table are marked learned and take Duolingo's meaning; missing words are added
+as learned, with romaji generated from the kana. New words containing kanji (or other non-kana text)
+need their romaji in the `--romaji` file (`{"水": "mizu"}`); the command lists any that are missing
+and writes nothing. Drop `--dry-run` to apply. Re-running is harmless.
+
+## Practice lists
+Besides the built-in learned and hiragana sets, each `storage/app/private/practice_sets/<name>.json`
+(a sorted list of word IDs) is a practice list, e.g. `food-and-drink`, `numbers`,
+`time-and-calendar`. These files are not tracked in git.
+
 ## Planned Improvements
 - Spaced repetition system (SRS)
 - UI/UX improvements
