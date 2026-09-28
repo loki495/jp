@@ -80,13 +80,11 @@ class PracticeSet
             $data = collect(json_decode(file_get_contents($this->filename), true) ?? []);
 
             $data = $data->map(function ($id) {
-                return Word::findOrFail($id);
+                return Word::findOrFail((int) $id);
             });
 
             if ($search) {
-                $data = $data->filter(function ($id) use ($search) {
-                    $word = Word::findOrFail($id);
-
+                $data = $data->filter(function ($word) use ($search) {
                     return
                         strpos($word->romaji, $search) !== false ||
                         strpos($word->kana, $search) !== false ||

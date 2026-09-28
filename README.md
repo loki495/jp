@@ -50,7 +50,7 @@ docker exec jp-app vendor/bin/pest          # tests
 docker exec jp-app composer test:unit       # tests + coverage, enforces the min% below
 ```
 Coverage (via PCOV, `app/` only — Volt/Blade component logic isn't currently measured) is
-gated locally at 55%, today's real number with a little headroom; raise it over time rather
+gated locally at 95%, today's real number (98.6%) with a little headroom; raise it over time rather
 than treating it as a ceiling. CI runs the full suite with coverage and uploads to
 [Codecov](https://codecov.io/gh/loki495/jp) on every push/PR to `main`/`develop`.
 
