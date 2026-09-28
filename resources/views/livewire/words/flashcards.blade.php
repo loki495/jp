@@ -18,11 +18,11 @@ new class extends Component
 
     public function mount(): void
     {
-        if (!$this->mode) {
+        if (! $this->mode) {
             $this->mode = 'romaji';
         }
 
-        if (!$this->activeSetName) {
+        if (! $this->activeSetName) {
             $this->activeSetName = PracticeSet::LEARNED_SET;
         }
 
@@ -54,9 +54,9 @@ new class extends Component
                 ->random();
         }
 
-        //$this->currentWord = Word::query()
-            //->where('romaji', 'like', 'jakk%')
-            //->first()->toArray();
+        // $this->currentWord = Word::query()
+        // ->where('romaji', 'like', 'jakk%')
+        // ->first()->toArray();
     }
 
     public function setMode($mode): void
@@ -65,8 +65,10 @@ new class extends Component
         $this->next();
     }
 
-    public function with(): array {
+    public function with(): array
+    {
         $sets = PracticeSet::available_sets();
+
         return [
             'mode' => $this->mode,
             'currentWord' => $this->currentWord,
@@ -80,29 +82,85 @@ new class extends Component
 
 <div
     x-data="{
+        // Card state: flip is a simple toggle; drag/swipe drives dx (horizontal
+        // offset in px) while dragging or animating, and both are combined into
+        // one transform below so they never fight each other.
         flipped: false,
-        flippedFalseLocked: false,
-        unlock() {
-            this.flippedFalseLocked = false;
-            this.flipped = false;
-        },
-        flip(event, force) {
-            if (this.flippedFalseLocked) {
-                force = false;
-            }
-            if (force === undefined) {
-                force = !this.flipped;
-            }
-            this.flipped = force;
-        },
-        init() {
-            this.flipped = false;
-            this.flippedFalseLocked = false;
+        dragging: false,
+        dragged: false,
+        animating: false,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        startTime: 0,
+        dx: 0,
+        threshold: 100, // px of drag before a release counts as a swipe
+        velocityThreshold: 0.5, // px/ms; a fast flick counts even under the distance threshold
+
+        flip() {
+            if (this.dragged || this.animating) return;
+            this.flipped = !this.flipped;
         },
 
+        cardStyle() {
+            const tilt = this.dx / 20;
+            return {
+                transform: `translateX(${this.dx}px) rotate(${tilt}deg) rotateY(${this.flipped ? 180 : 0}deg)`,
+                opacity: 1 - Math.min(Math.abs(this.dx) / 400, 0.6),
+                transition: this.dragging ? 'none' : 'transform 0.25s ease, opacity 0.25s ease',
+            };
+        },
+
+        pointerDown(event) {
+            if (this.animating) return;
+            this.pointerId = event.pointerId;
+            this.$refs.card.setPointerCapture(event.pointerId);
+            this.dragging = true;
+            this.dragged = false;
+            this.startX = event.clientX;
+            this.startY = event.clientY;
+            this.startTime = Date.now();
+            this.dx = 0;
+        },
+        pointerMove(event) {
+            if (!this.dragging || event.pointerId !== this.pointerId) return;
+            this.dx = event.clientX - this.startX;
+            // A vertical drag (scrolling past a long card) still counts as dragged, so
+            // the tap-to-flip that follows pointerup does not fire; only dx moves the card.
+            const dy = event.clientY - this.startY;
+            if (Math.abs(this.dx) > 5 || Math.abs(dy) > 5) this.dragged = true;
+        },
+        pointerUp(event) {
+            if (!this.dragging || event.pointerId !== this.pointerId) return;
+            this.dragging = false;
+
+            const elapsed = Math.max(Date.now() - this.startTime, 1);
+            const velocity = Math.abs(this.dx) / elapsed;
+            const passedThreshold = Math.abs(this.dx) > this.threshold || velocity > this.velocityThreshold;
+
+            if (passedThreshold) {
+                this.next();
+            } else {
+                this.dx = 0;
+                // Keep `dragged` true through the click event that follows this
+                // pointerup, so the drag isn't also read as a tap-to-flip; clear
+                // it right after so the next plain tap can flip normally.
+                setTimeout(() => { this.dragged = false; }, 0);
+            }
+        },
+        next(direction) {
+            this.animating = true;
+            this.dx = (direction ?? this.dx) >= 0 ? window.innerWidth : -window.innerWidth;
+            setTimeout(() => {
+                this.dx = 0;
+                this.flipped = false;
+                this.animating = false;
+                this.dragged = false;
+                $wire.next();
+            }, 250);
+        },
     }"
-    x-init="init"
-    class=" card-wrapper w-fit flex flex-col justify-center items-center gap-4 perspective max-w-screen max-w-(--breakpoint-sm) mx-auto touch-pan-x select-none"
+    class="card-wrapper w-fit max-h-[90dvh] overflow-hidden flex flex-col justify-center items-center gap-4 perspective max-w-screen max-w-(--breakpoint-sm) mx-auto touch-pan-y select-none"
 >
     @teleport('body')
     <div wire:loading class="fixed right-4 top-4"><flux:icon.loading /></div>
@@ -124,21 +182,21 @@ new class extends Component
     <div class="flex gap-2 justify-center mb-4" role="group" aria-label="Flashcard mode">
         <button
             wire:click="setMode('romaji')"
-            @click="flip(false)"
+            @click="flipped = false"
             class="px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-blue-500/20 hover:bg-blue-700/60"
             :class="{ 'bg-blue-800/70!': $wire.mode === 'romaji' }"
             aria-pressed="{{ $mode === 'romaji' ? 'true' : 'false' }}"
         >Romaji</button>
         <button
             wire:click="setMode('kana')"
-            @click="flip(false)"
+            @click="flipped = false"
             class="px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-blue-500/20 hover:bg-blue-700/60"
             :class="{ 'bg-blue-800/70!': $wire.mode === 'kana' }"
             aria-pressed="{{ $mode === 'kana' ? 'true' : 'false' }}"
         >Kana</button>
         <button
             wire:click="setMode('meaning')"
-            @click="flip(false)"
+            @click="flipped = false"
             class="px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition {{ $activeSetName == PracticeSet::HIRAGANA_SET ? 'bg-gray-600 opacity-50 cursor-not-allowed' : 'bg-blue-500/20 hover:bg-blue-700/60' }}"
             :class="{ 'bg-blue-800/70!': $wire.mode === 'meaning' }"
             {{ $activeSetName == PracticeSet::HIRAGANA_SET ? 'disabled' : '' }}
@@ -147,105 +205,24 @@ new class extends Component
 
     </div>
 
-    <span class="text-sm text-zinc-400 text-center mt-2 md:hidden">Swipe for next</span>
+    <span class="text-sm text-zinc-400 text-center mt-2">Drag, swipe or click Next for the next word</span>
 
     <!-- Card -->
     <div
-        x-data="{
-            startX: 0,
-            startTime: 0,
-            translateX: 0,
-            isDragging: false,
-            transition: '',
-            threshold: 80, // px
-            velocityThreshold: 0.5, // px/ms
-            rafPending: false,
-            counter: 0,
-            tapThreshold: 10, // max movement in px
-            tapTime: 200,     // max duration in ms
-
-            handleTouchStart(e) {
-                this.isDragging = true;
-                this.startX = e.touches[0].clientX;
-                this.startTime = Date.now();
-                this.transition = ''; // No transition while dragging
-            },
-            handleTouchMove(e) {
-                if (!this.isDragging) return;
-                if (this.rafPending) return;
-
-                const elapsed = Date.now() - this.startTime;
-                const absX = Math.abs(this.translateX);
-
-                if (elapsed < this.tapTime && Math.abs(this.translateX - this.startX) < this.tapThreshold) {
-                    return;
-                }
-
-
-                this.rafPending = true;
-
-                requestAnimationFrame(() => {
-                    this.translateX = e.touches[0].clientX - this.startX;
-                    this.$refs.card.style.transform = `translateX(${this.translateX}px)`;
-                    this.$refs.card.style.transition = 'rotate-y-180';
-                    this.rafPending = false;
-                });
-            },
-            handleTouchEnd() {
-                if (!this.isDragging) return;
-
-                const elapsed = Date.now() - this.startTime;
-                const absX = Math.abs(this.translateX);
-
-                if (elapsed < this.tapTime && Math.abs(this.translateX - this.startX) < this.tapThreshold) {
-                    return;
-                }
-
-                this.isDragging = false;
-
-                velocity = absX / elapsed;
-                if (absX > this.threshold && velocity > this.velocityThreshold) {
-                    // Animate off-screen
-                    this.transition = 'transform 0.3s cubic-bezier(.4,2,.6,1)';
-                    this.translateX = this.translateX > 0 ? window.innerWidth : -window.innerWidth;
-                    this.$refs.card.style.transform = `translateX(${this.translateX}px)`;
-                    this.$refs.card.style.transition = this.transition;
-                    setTimeout(() => {
-                        this.transition = '';
-                        this.translateX = 0;
-                        this.$refs.card.style.transform = `translateX(${this.translateX}px)`;
-                        this.$refs.card.style.transition = this.transition;
-                        this.flippedFalseLocked = true;
-                        $wire.next();
-                    }, 300);
-
-                } else {
-                    // Snap back
-                    this.transition = 'transform 0.3s';
-                    this.translateX = 0;
-                    this.translateX = 0;
-                    const flip = this.$root.flipped ? 180 : 0;
-                    this.$refs.card.style.transform = `translateX(0px) rotateY(${flip}deg)`;
-                    setTimeout(() => {
-                        this.$refs.card.style.transform = '';
-                    }, 300);
-                }
-            }
-        }"
         x-ref="card"
-        class="relative w-full transition-transform duration-300 transform-style preserve-3d cursor-pointer touch-pan-x select-none"
-        :class="{ 'rotate-y-180': flipped }"
+        class="relative w-full transform-style preserve-3d cursor-pointer touch-pan-y select-none"
+        :style="cardStyle()"
         @click="if (!$event.target.closest('.no-flip')) flip()"
-        @touchstart="handleTouchStart"
-        @touchmove="handleTouchMove"
-        @touchend="handleTouchEnd"
+        @pointerdown="pointerDown"
+        @pointermove="pointerMove"
+        @pointerup="pointerUp"
+        @pointercancel="pointerUp"
     >
 
         <!-- Front Face -->
         <div x-ref="front"
-            class="relative w-full md:min-w-max rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12 touch-pan-x select-none"
+            class="relative w-full md:min-w-max max-h-[55dvh] overflow-y-auto rounded-lg shadow-lg bg-zinc-500/30 text-center text-zinc-200 font-bold flex flex-col gap-2 items-center justify-center p-4 transition backface-hidden pt-12 touch-pan-y select-none"
             wire:loading.class="opacity-0"
-            @click.stop="if (!$event.target.closest('.no-flip')) flip();"
         >
             @if($mode === 'romaji')
                 <div class="md:mt-2 text-6xl">
@@ -253,6 +230,7 @@ new class extends Component
                 </div>
                 <flux:button
                     @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
+                    @pointerdown.stop=""
                     icon="play"
                     variant="subtle"
                     class="mt-4 text-sm text-blue-300 underline hover:text-blue-400"
@@ -263,6 +241,7 @@ new class extends Component
                 </div>
                 <flux:button
                     @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
+                    @pointerdown.stop=""
                     icon="play"
                     variant="subtle"
                     class="mt-4 text-sm text-blue-300 underline hover:text-blue-400"
@@ -273,13 +252,12 @@ new class extends Component
                 </div>
             @endif
 
-            <button class="hidden md:flex absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" wire:click.stop="next" aria-hidden="true">Next</button>
+            <button class="absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" @click.stop="next(-1)" @pointerdown.stop="">Next</button>
         </div>
 
         <!-- Back Face -->
         <div x-ref="back"
-            class="absolute w-full break-all max-w-full whitespace-normal top-0 left-1/2 -translate-x-1/2 rounded-lg shadow-lg bg-zinc-500/30 rotate-y-180 text-center backface-hidden flex flex-col gap-2 items-center justify-center p-4 transition pt-12 touch-pan-x select-none"
-            @click.stop="if (!$event.target.closest('.no-flip')) flip()"
+            class="absolute w-full break-all max-w-full max-h-[55dvh] overflow-y-auto whitespace-normal top-0 left-1/2 -translate-x-1/2 rounded-lg shadow-lg bg-zinc-500/30 rotate-y-180 text-center backface-hidden flex flex-col gap-2 items-center justify-center p-4 transition pt-12 touch-pan-y select-none"
             wire:loading.remove
         >
             <div class="md:mt-2 text-6xl text-blue-500 font-bold w-full flex justify-center">
@@ -292,14 +270,13 @@ new class extends Component
 
             <flux:button
                 @click.stop="playAudio('{{ $currentWord['kana'] ?? '' }}')"
+                @pointerdown.stop=""
                 icon="play"
                 variant="subtle"
                 class="mt-0 text-sm text-blue-300 underline hover:text-blue-400"
-                @touchstart.stop=''
-                @touchend.stop=''
             />
 
-            <button class="hidden md:flex absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" wire:click.stop="next" aria-hidden="true">Next</button>
+            <button class="absolute top-2 right-2 bg-transparent hover:bg-zinc-700/40 hover:text-zinc-300 font-bold py-1 px-1 border border-zinc-400 rounded cursor-pointer" @click.stop="next(-1)" @pointerdown.stop="">Next</button>
         </div>
 
     </div>
@@ -311,10 +288,3 @@ new class extends Component
     .transform-style { transform-style: preserve-3d; }
     </style>
 </div>
-@script
-<script>
-Livewire.hook('morphed', ({ el, component }) => {
-    document.querySelector('.card-wrapper')?._x_dataStack?.[0].unlock()
-})
-</script>
-@endscript
