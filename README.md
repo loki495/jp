@@ -1,5 +1,8 @@
 # JP Language Learning App
 
+[![tests](https://github.com/loki495/jp/actions/workflows/tests.yml/badge.svg)](https://github.com/loki495/jp/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/loki495/jp/graph/badge.svg)](https://codecov.io/gh/loki495/jp)
+
 A Laravel-based application for tracking and reinforcing Japanese language learning, including kana and kanji, using a flashcard-style system.
 
 ## Status
@@ -37,6 +40,19 @@ and writes nothing. Drop `--dry-run` to apply. Re-running is harmless.
 Besides the built-in learned and hiragana sets, each `storage/app/private/practice_sets/<name>.json`
 (a sorted list of word IDs) is a practice list, e.g. `food-and-drink`, `numbers`,
 `time-and-calendar`. These files are not tracked in git.
+
+## Testing
+```
+docker exec jp-app vendor/bin/pint          # code style (auto-fix)
+docker exec jp-app vendor/bin/phpstan analyse --memory-limit=1G
+docker exec jp-app vendor/bin/rector process --dry-run
+docker exec jp-app vendor/bin/pest          # tests
+docker exec jp-app composer test:unit       # tests + coverage, enforces the min% below
+```
+Coverage (via PCOV, `app/` only — Volt/Blade component logic isn't currently measured) is
+gated locally at 55%, today's real number with a little headroom; raise it over time rather
+than treating it as a ceiling. CI runs the full suite with coverage and uploads to
+[Codecov](https://codecov.io/gh/loki495/jp) on every push/PR to `main`/`develop`.
 
 ## Planned Improvements
 - Spaced repetition system (SRS)

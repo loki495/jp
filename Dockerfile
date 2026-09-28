@@ -1,5 +1,8 @@
 FROM php:8.4-apache
 
+RUN pecl install pcov \
+ && docker-php-ext-enable pcov
+
 RUN a2enmod rewrite
 
 RUN sed -i 's|DocumentRoot .*|DocumentRoot /var/www/html/public|' \
