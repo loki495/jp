@@ -15,5 +15,5 @@ it('returns a successful response for an authenticated user', function (): void 
     $this->actingAs(User::factory()->create())
         ->get('/')
         ->assertSuccessful()
-        ->assertSee('JP');
+        ->assertSee(config('app.name'));
 });
