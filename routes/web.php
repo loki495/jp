@@ -17,6 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('/kana', 'kana.index')->name('kana.index');
     Volt::route('/kana/practice', 'kana.practice')->name('kana.practice');
     Volt::route('/particles', 'particles.index')->name('particles.index');
+
+    Volt::route('/settings/profile', 'settings.profile')->name('settings.profile');
+    Volt::route('/settings/password', 'settings.password')->name('settings.password');
+    Volt::route('/settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
 
 Route::get('/api/practice-lists', function () {

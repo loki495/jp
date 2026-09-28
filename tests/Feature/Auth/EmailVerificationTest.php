@@ -33,7 +33,7 @@ test('email can be verified', function (): void {
     Event::assertDispatched(Verified::class);
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-    $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+    $response->assertRedirect(route('home', absolute: false).'?verified=1');
 });
 
 test('email is not verified with invalid hash', function (): void {
@@ -50,7 +50,7 @@ test('email is not verified with invalid hash', function (): void {
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
-test('verification controller redirects to dashboard if already verified', function (): void {
+test('verification controller redirects home if already verified', function (): void {
     $user = User::factory()->create();
 
     $verificationUrl = URL::temporarySignedRoute(
@@ -61,5 +61,5 @@ test('verification controller redirects to dashboard if already verified', funct
 
     $response = $this->actingAs($user)->get($verificationUrl);
 
-    $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+    $response->assertRedirect(route('home', absolute: false).'?verified=1');
 });
