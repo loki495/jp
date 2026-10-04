@@ -138,4 +138,18 @@ return [
         explode(',', (string) env('STATIC_ASSET_HOSTS', '')),
     ))),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Owner auto-login (opt-in)
+    |--------------------------------------------------------------------------
+    |
+    | Off by default. See App\Http\Middleware\AutoLoginForTrustedRequests: signs the existing
+    | auto_login_email account in for the owner's LAN requests or Cloudflare Access identity.
+    |
+    */
+
+    'auto_login_email' => env('AUTO_LOGIN_EMAIL'),
+    'auto_login_lan' => (bool) env('AUTO_LOGIN_LAN', false),
+    'auto_login_owner_email' => env('AUTO_LOGIN_OWNER_EMAIL'),
+
 ];

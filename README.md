@@ -54,6 +54,18 @@ gated locally at 95%, today's real number (98.6%) with a little headroom; raise 
 than treating it as a ceiling. CI runs the full suite with coverage and uploads to
 [Codecov](https://codecov.io/gh/loki495/jp) on every push/PR to `main`/`develop`.
 
+## Owner auto-login (optional)
+
+Off by default. For a single-owner deployment you can skip the login page for yourself with three `.env` settings:
+
+| Variable | Effect |
+|---|---|
+| `AUTO_LOGIN_EMAIL` | An existing account to sign in as. It is never created. |
+| `AUTO_LOGIN_LAN=true` | Signs that account in for requests that carry no Cloudflare edge header (`CF-Connecting-IP`/`CF-Ray`) and come from a private address. |
+| `AUTO_LOGIN_OWNER_EMAIL` | Signs it in when Cloudflare Access itself reports that email (`Cf-Access-Authenticated-User-Email`). |
+
+Only enable `AUTO_LOGIN_LAN` when nothing but your tunnel and your LAN can reach the app (no public port-forward), since that is what makes "no Cloudflare header" mean "on the LAN". `X-Forwarded-For` is never trusted, because a client can append to it. Apply a change with `docker compose up -d`; a plain image pull keeps the old environment. See `AutoLoginForTrustedRequests`.
+
 ## Planned Improvements
 - Spaced repetition system (SRS)
 - UI/UX improvements
